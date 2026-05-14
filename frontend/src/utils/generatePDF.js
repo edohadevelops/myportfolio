@@ -127,7 +127,6 @@ export const generatePDF = ({
   if (projectBrief) {
     doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...GOLD[0], ...GOLD.slice(1));
     doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
     doc.text('PROJECT BRIEF', cardX + 8, y);
 
