@@ -24,10 +24,12 @@ const ICON_MAP = {
 };
 
 const LEVEL_STYLE = {
-  Experienced: { label: 'Experienced', bg: 'rgba(34,197,94,0.12)', color: '#16A34A' },
-  Learning:    { label: 'Learning',    bg: 'rgba(245,158,11,0.12)', color: '#D97706' },
-  Beginner:    { label: 'Beginner',    bg: 'rgba(249,115,22,0.12)', color: '#EA580C' },
-  Planned:     { label: 'Planned',     bg: 'rgba(156,163,175,0.12)', color: '#6B7280' },
+  Experienced:  { label: 'Experienced',  bg: 'rgba(34,197,94,0.12)',   color: '#16A34A' },
+  Advanced:     { label: 'Advanced',     bg: 'rgba(99,102,241,0.12)',   color: '#4F46E5' },
+  Intermediate: { label: 'Intermediate', bg: 'rgba(14,165,233,0.12)',   color: '#0284C7' },
+  Beginner:     { label: 'Beginner',     bg: 'rgba(249,115,22,0.12)',   color: '#EA580C' },
+  Learning:     { label: 'Learning',     bg: 'rgba(245,158,11,0.12)',   color: '#D97706' },
+  Planned:      { label: 'Planned',      bg: 'rgba(156,163,175,0.12)',  color: '#6B7280' },
 };
 
 const SkillCard = ({ skill, index, accentColor, inView }) => {

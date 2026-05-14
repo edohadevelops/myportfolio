@@ -587,7 +587,10 @@ const StepSummary = ({
           onClick={onSendEmail}
           disabled={emailStatus === 'sending' || emailStatus === 'sent'}
         >
-          {emailStatus === 'sent' ? 'Sent!' : emailStatus === 'sending' ? 'Sending...' : 'Send to Amen'}
+          {emailStatus === 'sent'    ? '✓ Sent to Amen!'
+           : emailStatus === 'sending' ? 'Sending...'
+           : emailStatus === 'error'   ? 'Try again'
+           : 'Send to Amen'}
         </button>
         <button className="btn-ghost" onClick={onBack}>← Go back and adjust</button>
       </motion.div>
@@ -767,24 +770,51 @@ const PricingPage = () => {
   const handleSendEmail = async () => {
     setEmailStatus('sending');
     try {
-      const subject = encodeURIComponent(`Website Plan Request — ${clientDetails.name} — ${projectType?.name}`);
-      const body = encodeURIComponent(
-        `New website plan request via EdohaDeveloped\n\n` +
-        `Name: ${clientDetails.name}\n` +
-        `Email: ${clientDetails.email}\n` +
-        `Company: ${clientDetails.company || 'N/A'}\n\n` +
-        `Project: ${projectType?.name}\n` +
-        `Features: ${selectedFeatures.map(f => f.name).join(', ') || 'None selected'}\n` +
-        `Extras: ${selectedAddons.map(a => a.name).join(', ') || 'None'}\n` +
-        `Timeline: ${projectType?.timelineOptions?.find(t => t.value === timeline)?.label || 'Not specified'}\n` +
-        `Start Date: ${startDate || 'Not specified'}\n\n` +
-        `Project Brief:\n${projectBrief || 'Not generated'}\n\n` +
-        `Total Estimate: ${currency.symbol}${totals.total.toLocaleString()} ${currency.code}`
-      );
-      window.location.href = `mailto:edohadevelops@gmail.com?subject=${subject}&body=${body}`;
-      setTimeout(() => setEmailStatus('sent'), 800);
-    } catch {
-      setEmailStatus('idle');
+      const timelineLabel = projectType?.timelineOptions?.find(t => t.value === timeline)?.label;
+
+      // Generate PDF as base64 so it can be attached to the email
+      const { quoteRef, base64: pdfBase64 } = generatePDF({
+        clientDetails,
+        projectType,
+        selectedFeatures,
+        selectedAddons,
+        timeline: timelineLabel,
+        startDate: startDate
+          ? new Date(startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+          : '',
+        projectBrief,
+        totals,
+        currency,
+        returnBase64: true,
+      });
+
+      const res = await fetch('/.netlify/functions/send-quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientDetails,
+          projectType,
+          selectedFeatures,
+          selectedAddons,
+          timeline: timelineLabel,
+          totals,
+          currency,
+          quoteRef,
+          pdfBase64,
+          projectBrief,
+          timelineSurchargePercent: totals.timelineSurchargePercent,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to send');
+      }
+
+      setEmailStatus('sent');
+    } catch (err) {
+      console.error('Send email error:', err);
+      setEmailStatus('error');
     }
   };
 

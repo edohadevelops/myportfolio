@@ -181,10 +181,20 @@ export const FEATURES_BY_TYPE = {
 };
 
 export const ADDONS = [
+  // ── Revision and Support ──
   { id: 'ao-1', name: 'Extra Revision Round', price: 20, description: 'Every project comes with 2 revision rounds. Add more if you want extra flexibility.' },
-  { id: 'ao-2', name: 'Hosting Setup and Deployment', price: 30, description: 'I\'ll get your project live on a hosting platform and make sure everything is configured properly.' },
-  { id: 'ao-3', name: '1 Month Support After Launch', price: 40, description: 'Bug fixes and small tweaks for a full month after your site goes live.' },
-  { id: 'ao-4', name: '3 Months Support After Launch', price: 90, description: 'Three months of peace of mind with fixes, tweaks, and guidance after launch.' },
+  { id: 'ao-2', name: '1 Month Support After Launch', price: 40, description: 'Bug fixes and small tweaks for a full month after your site goes live.' },
+  { id: 'ao-3', name: '3 Months Support After Launch', price: 90, description: 'Three months of peace of mind — fixes, tweaks, and guidance long after launch.' },
+
+  // ── Hosting ──
+  { id: 'ao-host-1', name: 'Static Hosting Setup (Netlify / Vercel)', price: 20, description: 'Free hosting for static sites and frontend-only apps. I\'ll set it up, configure the build, and connect your domain. Great for portfolios and landing pages.' },
+  { id: 'ao-host-2', name: 'Shared Hosting Setup', price: 45, description: 'Traditional cPanel-style hosting — solid for small business sites. You pay the provider directly (~$3–10/mo). I handle the setup, file transfer, and DNS.' },
+  { id: 'ao-host-3', name: 'VPS Server Setup', price: 80, description: 'A Virtual Private Server (DigitalOcean, Linode, etc.) for apps that need a real backend. You pay the server cost (~$6–20/mo). I set up the environment, deploy the app, and secure the server.' },
+  { id: 'ao-host-4', name: 'Cloud Hosting Setup (AWS / GCP)', price: 130, description: 'Enterprise-grade cloud infrastructure for high-traffic or scalable apps. Best for production web apps. You pay usage-based cloud costs. I architect, deploy, and configure the environment.' },
+
+  // ── Domain and Email ──
+  { id: 'ao-domain-1', name: 'Domain Registration (.com / .net / .org)', price: 25, description: 'I\'ll register your domain name, configure DNS records, and point everything to your hosting. You pay the yearly renewal fee (~$10–15/yr) directly to the registrar.' },
+  { id: 'ao-domain-2', name: 'Professional Email Address', price: 30, description: 'A branded email like hello@yourbusiness.com using Google Workspace or Zoho. You pay the provider fee (from ~$6/mo). I handle the setup and DNS configuration.' },
 ];
 
 export const DISCOUNT_THRESHOLD = 5;

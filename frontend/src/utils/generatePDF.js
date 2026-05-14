@@ -90,6 +90,7 @@ export const generatePDF = ({
   projectBrief,
   totals,
   currency,
+  returnBase64 = false,
 }) => {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const quoteRef = generateQuoteRef();
@@ -335,6 +336,12 @@ export const generatePDF = ({
   });
 
   drawFooter(doc, y);
+
+  if (returnBase64) {
+    const dataUri = doc.output('datauristring');
+    const base64 = dataUri.replace(/^data:application\/pdf;base64,/, '');
+    return { quoteRef, base64 };
+  }
 
   doc.save(`EdohaDeveloped_Plan_${quoteRef}.pdf`);
   return quoteRef;

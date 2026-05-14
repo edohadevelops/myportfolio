@@ -22,31 +22,31 @@ export const TRACKS = {
       {
         name: 'Frontend Development',
         icon: 'FaReact',
-        level: 'Experienced',
+        level: 'Advanced',
         desc: '3 years of professional experience building production React applications. I work from Figma designs, manage state with Redux, and ship responsive UIs with Tailwind CSS.',
       },
       {
         name: 'Backend Development',
         icon: 'FaNodeJs',
-        level: 'Experienced',
+        level: 'Advanced',
         desc: 'Built REST APIs with Node.js and Express in production. Authentication systems, Paystack payment processing, Nodemailer email flows, and database-backed business logic across multiple live applications.',
       },
       {
         name: 'Database Design',
         icon: 'FaDatabase',
-        level: 'Experienced',
+        level: 'Advanced',
         desc: '2 years of production experience with MySQL and MongoDB. Designed normalized schemas for a crowdfunding platform and a school management system, with a focus on data integrity.',
       },
       {
         name: 'Secure Authentication',
         icon: 'FaShieldAlt',
-        level: 'Experienced',
+        level: 'Advanced',
         desc: 'Implemented JWT-based authentication, bcrypt password hashing, and role-based access control in production applications. Also handled payment webhook verification for financial security.',
       },
       {
         name: 'Real-Time Features',
         icon: 'FaBolt',
-        level: 'Experienced',
+        level: 'Intermediate',
         desc: 'Integrated Socket.IO for live messaging in a school communication platform. Comfortable with WebSocket architecture, room management, and event-driven UI updates.',
       },
       {
@@ -58,7 +58,7 @@ export const TRACKS = {
       {
         name: 'Problem Solving',
         icon: 'FaLightbulb',
-        level: 'Experienced',
+        level: 'Advanced',
         desc: 'Mathematics degree (3.92 GPA, Covenant University) gives me an analytical approach to engineering problems. Strong at edge case analysis, system constraint reasoning, and scalable design.',
       },
       {
@@ -243,7 +243,7 @@ export const TRACKS = {
       {
         name: 'Abstract Algebra and Number Theory',
         icon: 'MdFunctions',
-        level: 'Experienced',
+        level: 'Advanced',
         desc: 'Graduate coursework in Abstract Algebra I and II and Number Theory at MSU. Comfortable teaching proof-based mathematics at an advanced level.',
       },
       {
@@ -367,43 +367,43 @@ export const TRACKS = {
       {
         name: 'Statistical Reasoning',
         icon: 'FaChartLine',
-        level: 'Experienced',
+        level: 'Advanced',
         desc: 'Strong mathematical foundation from undergraduate and graduate coursework: probability theory, applied regression, linear algebra, and discrete mathematics. Actively applying these to real data analysis problems.',
       },
       {
         name: 'Python',
         icon: 'SiPython',
-        level: 'Learning',
+        level: 'Beginner',
         desc: 'Actively developing Python for data analysis and scripting. Currently using it in graduate coursework at MSU and beginning to explore pandas, NumPy, and matplotlib.',
       },
       {
         name: 'SQL and Database Querying',
         icon: 'FaDatabase',
-        level: 'Experienced',
+        level: 'Advanced',
         desc: '3 years of production experience with MySQL and MongoDB from professional software development. Skilled at writing queries, designing schemas, and ensuring data consistency in live systems.',
       },
       {
         name: 'Data Pipelines',
         icon: 'FaStream',
-        level: 'Learning',
+        level: 'Beginner',
         desc: 'Built structured data flows in production applications connecting users, payment events, and transaction records. Not yet experienced with tools like Spark or Airflow but actively learning.',
       },
       {
         name: 'Excel and Structured Data',
         icon: 'FaTable',
-        level: 'Learning',
+        level: 'Intermediate',
         desc: 'Comfortable with tabular data in Excel for analysis, validation, and reporting. Learning to move from spreadsheet-based workflows into Python-based pipelines.',
       },
       {
         name: 'Algorithms and Complexity',
         icon: 'FaCogs',
-        level: 'Experienced',
+        level: 'Advanced',
         desc: 'Undergraduate coursework in Algorithms and Complexity Analysis at Covenant University. Understand Big-O notation, common data structures, and how computational cost scales with input size.',
       },
       {
         name: 'Artificial Intelligence',
         icon: 'FaRobot',
-        level: 'Learning',
+        level: 'Intermediate',
         desc: 'Graduate coursework in AI at Missouri State University. Familiar with foundational concepts including search algorithms, knowledge representation, and introductory machine learning. Still actively building depth.',
       },
       {
