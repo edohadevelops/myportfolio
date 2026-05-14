@@ -1,0 +1,6 @@
+.loading-page{
+    @apply h-[100vh] w-full flex items-center justify-center
+}
+.dashboard-page-content{
+    @apply px-8 pt-8 bg-gray-100 w-full h-[calc(100%-115px)]
+}

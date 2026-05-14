@@ -1,0 +1,72 @@
+.education-section { @apply w-full py-20; }
+
+.edu-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+}
+
+.edu-card {
+  @apply flex flex-col gap-4 p-6 rounded-2xl border bg-white transition-all duration-300;
+  border-color: #F0EBE1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.edu-card:hover {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.09);
+  border-color: #E0D5C0;
+}
+
+.edu-card-top {
+  @apply flex gap-4 items-start;
+}
+
+.edu-logo-wrap {
+  @apply flex-shrink-0;
+  width: 56px;
+  height: 56px;
+}
+.edu-logo {
+  @apply w-full h-full rounded-xl object-contain border;
+  border-color: var(--color-border);
+  background: white;
+  padding: 4px;
+}
+.edu-logo-fallback {
+  @apply w-full h-full rounded-xl items-center justify-center font-bold text-sm;
+  display: none;
+  font-family: 'Syne', sans-serif;
+}
+
+.edu-degree {
+  @apply text-[15px] font-bold leading-snug;
+  font-family: 'Syne', sans-serif;
+  color: var(--color-secondary);
+}
+.edu-school {
+  @apply flex items-center gap-1 text-[13px] font-semibold mt-1 transition-opacity duration-200;
+  text-decoration: none;
+}
+.edu-school:hover { opacity: 0.75; }
+
+.edu-meta {
+  @apply flex flex-wrap gap-3;
+}
+.edu-meta-item {
+  @apply flex items-center gap-1.5 text-[12px];
+  color: #9CA3AF;
+  font-family: 'DM Sans', sans-serif;
+}
+.edu-period {
+  @apply font-semibold;
+  color: #6B7280;
+}
+
+.edu-courses { @apply flex flex-col gap-2; }
+.edu-courses-label {
+  @apply text-[11px] font-bold uppercase tracking-widest;
+  color: #9CA3AF;
+  font-family: 'DM Sans', sans-serif;
+}
+.edu-course-tags { @apply flex flex-wrap gap-2; }
+.edu-course-tag {
+  @apply px-2.5 py-1 rounded-lg text-[12px] font-medium border;
+  font-family: 'DM Sans', sans-serif;
+}

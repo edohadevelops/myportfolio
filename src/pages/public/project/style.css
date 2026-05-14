@@ -1,0 +1,121 @@
+.project-page {
+  @apply min-h-[100vh] flex flex-col-reverse lg:flex-row gap-8 pt-4;
+}
+.project-page-img-feature-section {
+  @apply w-full lg:w-[40%] pb-8 flex flex-col-reverse lg:flex-col gap-4;
+}
+.project-page-main-img {
+  @apply rounded-xl drop-shadow-md h-auto lg:h-[300px] cursor-pointer mb-6 relative;
+}
+.project-page-main-img img {
+  @apply w-full h-full rounded-xl object-cover object-left-top;
+}
+.project-page-img-cover {
+  @apply w-full h-full flex items-center justify-center text-center absolute top-0 left-0 bg-[#201f1fa0] text-white italic text-sm font-semibold opacity-0 transition-opacity duration-100 ease-in hover:opacity-100;
+}
+.project-page-entity-images {
+  @apply hidden md:grid grid-cols-2 lg:grid-cols-3 gap-3;
+}
+.project-page-entity-image { @apply w-full rounded-xl; }
+.project-page-entity-image img { @apply rounded-xl; }
+
+.project-page-details-entity-details {
+  @apply px-4 py-4 rounded-xl border drop-shadow-sm relative overflow-x-hidden;
+}
+.project-page-details-entity-header {
+  @apply flex gap-2 items-center mb-4 pb-3 border-b border-b-gray-200;
+}
+.project-page-details-entity-header-icon {
+  @apply text-[25px];
+  color: var(--track-color);
+}
+.project-page-details-entity-header-title {
+  @apply md:text-lg font-semibold;
+}
+.project-page-details-entity-description {
+  @apply text-gray-800;
+}
+.project-page-details-entity-curtain {
+  @apply w-full h-full absolute top-0 left-0 transition-all duration-300 ease-in;
+  background: var(--track-color-bg, #F5F5F5);
+}
+
+.project-page-details-section {
+  @apply w-full lg:w-[60%] pt-3 md:pt-3 lg:pt-3 pb-6;
+}
+.project-page-details-title {
+  @apply text-[22px] font-semibold mb-2;
+}
+.project-details-category-cards {
+  @apply flex gap-3 flex-wrap mb-3;
+}
+.project-page-details-category {
+  @apply px-3 py-2 rounded-md bg-gray-100 text-sm;
+}
+.project-details-page-description-section {
+  @apply mb-3;
+}
+.project-details-page-description-title {
+  @apply text-lg font-semibold mb-2;
+}
+.project-details-page-description {
+  @apply text-[15px] text-gray-700;
+}
+.project-details-page-preview {
+  @apply flex gap-3 py-2 mb-3;
+}
+.project-details-page-preview a {
+  @apply px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-all duration-200 ease-in font-medium;
+}
+.project-details-view-github-btn {
+  @apply bg-gray-700 text-white border-2 border-transparent;
+}
+.project-details-view-github-btn:hover {
+  @apply bg-white text-gray-700;
+  border-color: #374151;
+}
+.project-details-view-site-btn {
+  color: #fff;
+  border: 2px solid transparent;
+  background: var(--track-color);
+}
+.project-details-view-site-btn:hover {
+  background: white;
+  color: #374151;
+  border-color: var(--track-color);
+}
+
+.project-details-page-tabs {
+  @apply flex flex-wrap mb-3;
+}
+.project-details-page-tab {
+  @apply p-2 text-gray-800 transition-all duration-100 ease-out rounded-md;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+.project-details-page-active-tab {
+  font-weight: 600;
+  background: var(--track-color-bg);
+  color: var(--track-color);
+}
+
+.project-details-page-entity-cards {
+  @apply flex flex-col gap-3 max-h-[400px] md:max-h-[600px] lg:max-h-[250px] overflow-y-auto pb-6;
+}
+.project-details-page-entity-card {
+  @apply p-3 w-full flex gap-3 border items-center rounded-lg cursor-pointer transition-all duration-150;
+  background: none;
+  text-align: left;
+}
+.project-details-page-entity-card:hover {
+  border-color: var(--track-color);
+}
+.project-details-page-entity-number {
+  @apply w-[30px] h-[30px] text-[15px] rounded-full flex items-center justify-center flex-shrink-0;
+}
+.project-details-page-entity-name {
+  @apply text-[14px];
+  font-family: 'DM Sans', sans-serif;
+}

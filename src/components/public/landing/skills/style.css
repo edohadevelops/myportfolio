@@ -1,0 +1,76 @@
+.skills-section {
+  @apply w-full py-20;
+}
+
+.section-header {
+  @apply flex flex-col items-center text-center mb-14 gap-3;
+}
+
+.section-tag {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-widest;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.section-title {
+  @apply text-[32px] md:text-[40px] font-bold leading-tight;
+  color: var(--color-secondary);
+  letter-spacing: -1px;
+}
+
+.section-subtitle {
+  @apply text-[15px] max-w-[540px] leading-relaxed;
+  color: #6B7280;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.skills-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5;
+}
+
+.skill-card {
+  @apply flex flex-col gap-3 p-6 rounded-2xl border bg-white transition-all duration-300 cursor-default;
+  border-color: #F0EBE1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.skill-card:hover {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.09);
+  border-color: #E0D5C0;
+}
+
+.skill-card-top {
+  @apply flex items-center justify-between;
+}
+
+.skill-icon-wrapper {
+  @apply w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0;
+}
+
+.skill-level-badge {
+  @apply text-[10px] font-bold px-2 py-0.5 rounded-full;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.skill-name {
+  @apply text-[15px] font-semibold;
+  color: var(--color-secondary);
+  font-family: 'DM Sans', sans-serif;
+}
+
+.skill-description {
+  @apply text-[14px] leading-relaxed;
+  color: #6B7280;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.skills-show-more {
+  @apply flex justify-center mt-10;
+}
+
+.skills-toggle-btn {
+  @apply px-6 py-2.5 rounded-full border text-sm font-medium transition-all duration-200;
+  font-family: 'DM Sans', sans-serif;
+}
+.skills-toggle-btn:hover {
+  opacity: 0.8;
+}

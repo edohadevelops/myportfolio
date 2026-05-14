@@ -1,0 +1,83 @@
+/* .logo{
+    @apply h-[30px] w-fit
+} */
+.register-page{
+    @apply flex items-center justify-center w-full min-h-[100vh] lg:h-[100vh] bg-primary
+}
+.welcome-section{
+    @apply py-5;
+    @apply w-[40%] h-full hidden lg:flex flex-col text-white;
+}
+.register-logo img{
+    @apply h-full w-full
+}
+.register-logo{
+    @apply h-[40px] w-[200px] ml-8
+}
+.welcome-info{
+    @apply px-8 flex flex-col h-full items-center py-20 gap-8 ;
+}
+.welcome-register{
+    @apply font-bold text-5xl text-white;
+}
+.register-description{
+    @apply text-center text-lg text-slate-50 mb-6;
+}
+.back-to-login{
+    @apply py-3 px-16 bg-transparent border border-white rounded-3xl
+}
+
+.register-view{
+    @apply bg-white h-full sm:h-fit lg:h-full shadow-xl lg:py-8 px-8 lg:px-20 flex flex-col gap-10 lg:justify-center lg:items-center w-full lg:w-[60%] max-lg:max-w-[500px] sm:rounded-2xl lg:rounded-l-3xl py-14
+}
+.register-header{
+    @apply flex flex-col w-full lg:w-fit gap-4
+}
+.register-header img{
+    @apply lg:hidden
+}
+.register-header p{
+    @apply font-bold text-2xl sm:text-3xl lg:text-5xl text-primary mb-2;
+}
+.register-header small{
+    @apply text-[15px] font-semibold text-sub-text lg:text-end w-full
+}
+.register-header a{
+    @apply text-[brown] underline ml-2
+}
+.form-register{
+    @apply flex flex-col w-full max-w-[450px]
+}
+.register-input-group{
+    @apply w-full drop-shadow-sm bg-none flex flex-col gap-1 mb-2
+}
+.register-input-group label{
+    @apply block text-secondary text-sm
+}
+.register-input-group input{
+    @apply w-full  h-[50px] rounded-md outline-none px-4 border border-gray-200
+}
+.register-input-group span{
+    @apply w-full text-[14px]
+}
+.register-input-group input::placeholder{
+    @apply text-gray-400
+}
+.forgot-password{
+    @apply flex justify-end w-full
+}
+.forgot-password a{
+    @apply underline text-sub-text
+}
+.register-btn{
+    @apply w-full bg-primary py-3 text-white  my-8 rounded-md
+}
+.register-disabled-btn{
+    @apply cursor-pointer bg-disabled-bg text-disabled-text
+}
+/* .create-div{
+    @apply my-6
+} */
+.create-div a{
+    @apply underline  text-slate-900
+}

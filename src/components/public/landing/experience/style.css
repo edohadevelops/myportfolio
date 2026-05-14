@@ -1,0 +1,102 @@
+.experience-section { @apply w-full py-20; }
+
+.exp-list { @apply flex flex-col gap-5; }
+
+/* Card */
+.exp-card {
+  @apply flex gap-5 p-6 rounded-2xl border transition-all duration-300;
+  border-color: var(--color-border);
+  background: var(--card-bg, white);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+.exp-card:hover {
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Logo column */
+.exp-logo-col { @apply flex-shrink-0 pt-1; }
+
+.exp-logo-wrap {
+  @apply relative;
+  width: 56px;
+  height: 56px;
+}
+.exp-logo {
+  @apply w-full h-full rounded-xl object-contain border;
+  border-color: var(--color-border);
+  background: white;
+  padding: 6px;
+}
+.exp-logo-fallback {
+  @apply w-full h-full rounded-xl items-center justify-center font-bold text-sm;
+  display: none;
+  font-family: 'Syne', sans-serif;
+}
+
+/* Content */
+.exp-content { @apply flex flex-col gap-3 flex-1 min-w-0; }
+
+.exp-header { @apply flex items-start justify-between gap-4 flex-wrap; }
+
+.exp-header-left { @apply flex flex-col gap-1; }
+
+.exp-role {
+  @apply text-[16px] font-bold leading-snug;
+  font-family: 'Syne', sans-serif;
+  color: var(--color-secondary);
+}
+
+.exp-meta-row { @apply flex items-center gap-2 flex-wrap; }
+
+.exp-company {
+  @apply flex items-center gap-1 text-[13px] font-semibold transition-opacity duration-200;
+  text-decoration: none;
+}
+.exp-company:hover { opacity: 0.75; }
+
+.exp-type-badge {
+  @apply text-[11px] font-semibold px-2 py-0.5 rounded-md;
+  background: var(--badge-bg, #F3F0E8);
+  color: var(--badge-text, #6B6570);
+  font-family: 'DM Sans', sans-serif;
+}
+
+.exp-time-loc { @apply flex flex-col gap-1 items-end flex-shrink-0; }
+
+.exp-detail {
+  @apply flex items-center gap-1.5 text-[12px] whitespace-nowrap;
+  color: #9CA3AF;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.exp-divider {
+  @apply w-full h-px;
+  background: var(--color-border);
+}
+
+.exp-description {
+  @apply text-[14px] leading-relaxed;
+  color: var(--color-subtext);
+  font-family: 'DM Sans', sans-serif;
+}
+
+.exp-bullets {
+  @apply flex flex-col gap-2 list-none;
+}
+
+.exp-bullet {
+  @apply flex gap-3 text-[14px] leading-relaxed;
+  color: var(--color-subtext);
+  font-family: 'DM Sans', sans-serif;
+}
+
+.exp-bullet-dot {
+  @apply w-1.5 h-1.5 rounded-full flex-shrink-0 mt-2;
+}
+
+/* Mobile: stack logo above content */
+@media (max-width: 480px) {
+  .exp-card { @apply flex-col; }
+  .exp-time-loc { @apply items-start; }
+}

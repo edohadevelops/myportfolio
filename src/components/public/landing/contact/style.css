@@ -1,0 +1,109 @@
+.contact-section {
+  @apply w-full py-20;
+}
+
+.contact-layout {
+  @apply grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8;
+}
+
+.contact-form {
+  @apply flex flex-col gap-5 bg-white rounded-2xl border p-7;
+  border-color: #F0EBE1;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+}
+
+.contact-field {
+  @apply flex flex-col gap-1.5;
+}
+
+.contact-label {
+  @apply text-[13px] font-semibold pl-3;
+  color: #374151;
+  border-left: 2px solid var(--track-color);
+  font-family: 'DM Sans', sans-serif;
+}
+
+.contact-input {
+  @apply w-full border rounded-xl px-4 py-3 text-[15px] outline-none transition-all duration-200;
+  border-color: #E8E2D5;
+  color: #111827;
+  background: #FAFAF7;
+  font-family: 'DM Sans', sans-serif;
+}
+.contact-input:focus {
+  border-color: var(--track-color);
+  background: white;
+  box-shadow: 0 0 0 3px var(--track-shadow);
+}
+
+.contact-textarea {
+  @apply w-full border rounded-xl px-4 py-3 text-[15px] outline-none resize-none transition-all duration-200;
+  border-color: #E8E2D5;
+  color: #111827;
+  background: #FAFAF7;
+  font-family: 'DM Sans', sans-serif;
+}
+.contact-textarea:focus {
+  border-color: var(--track-color);
+  background: white;
+  box-shadow: 0 0 0 3px var(--track-shadow);
+}
+
+.contact-error {
+  @apply text-sm text-red-700 bg-red-50 rounded-lg px-4 py-3;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.contact-submit {
+  @apply flex items-center justify-center gap-2 w-fit px-7 py-3 rounded-xl text-white text-[15px] font-semibold transition-all duration-200;
+  font-family: 'DM Sans', sans-serif;
+}
+.contact-submit:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+.contact-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.contact-success {
+  @apply text-sm text-green-700 bg-green-50 rounded-lg px-4 py-3;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.contact-socials {
+  @apply bg-white rounded-2xl border p-7 h-fit;
+  border-color: #F0EBE1;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+}
+
+.contact-socials-title {
+  @apply text-[20px] font-bold mb-6;
+  color: var(--color-secondary);
+}
+
+.contact-social-list {
+  @apply flex flex-col gap-4;
+}
+
+.contact-social-item {
+  @apply flex items-center gap-4 cursor-pointer;
+  text-decoration: none;
+}
+
+.contact-social-icon {
+  @apply w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0;
+}
+
+.contact-social-label {
+  @apply text-[12px] font-semibold uppercase tracking-wider;
+  color: #9CA3AF;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.contact-social-value {
+  @apply text-[14px] font-medium;
+  color: #374151;
+  font-family: 'DM Sans', sans-serif;
+}

@@ -1,0 +1,54 @@
+.table-filters{
+    @apply border w-full flex gap-4 bg-white px-5 py-3 items-center drop-shadow-sm
+}
+.table-filters-input{
+    @apply relative w-[240px] text-gray-800
+}
+.table-filters-input input{
+    @apply border-gray-300 rounded-lg border-2 text-sm py-1 pl-8 w-full outline-none
+}
+.table-filters-input input::placeholder{
+    @apply text-gray-600 font-semibold text-[12px]
+}
+.table-input-search-icon{
+    @apply absolute text-sm left-3 top-[10px]
+}
+.table-filter{
+    @apply flex gap-[6px] items-center border-gray-300 rounded-lg border-2 text-[12px] py-1 px-2 text-gray-800 font-semibold cursor-pointer
+}
+.table-component-table{
+    @apply w-full px-4
+}
+.table-header{
+    @apply w-full
+}
+.table-header th{
+    @apply text-start font-semibold text-[12px] capitalize
+}
+.table-body{
+    @apply bg-white px-4 py-3 border drop-shadow-sm
+}
+.table-item-icon{
+    @apply w-[17px] h-[17px] bg-gray-300 rounded-full flex items-center justify-center
+}
+.table-item-icon-inner-circle{
+    @apply w-[40%] h-[40%] bg-white rounded-full
+}
+.table-body td{
+    @apply text-[13px] font-semibold py-3 border-b
+}
+.table-body select{
+    @apply outline-none border-2  p-1 rounded-md text-gray-700 pl-3 text-[12px]
+}
+.select-icon{
+    @apply p-[3px] rounded-full absolute left-2 top-[10px]
+}
+.table-actions{
+    @apply flex gap-2 items-center
+}
+.table-actions-edit{
+    @apply flex items-center gap-1 border-2 border-transparent bg-primary text-white font-semibold rounded-md px-3 py-1 hover:bg-white hover:border-primary hover:text-gray-700 transition-all duration-100 ease-in
+}
+.table-actions-delete{
+    @apply bg-gray-200 rounded-md h-fit px-2 py-1 hover:bg-red-600 hover:text-white transition-all duration-100 ease-in
+}

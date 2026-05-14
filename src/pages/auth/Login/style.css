@@ -1,0 +1,66 @@
+.logo{
+    @apply h-[35px] w-[180px] -ml-2
+}
+.logo img{
+    @apply w-full h-full
+}
+.login-page{
+    @apply flex w-full h-[100vh] bg-[#f7eedc]
+}
+.left-div{
+    @apply py-20 px-16 lg:w-[55%] xl:w-[65%] h-full hidden lg:flex flex-col justify-center items-center;
+}
+.left-div img{
+    @apply h-[450px] w-full
+}
+.login-div{
+    @apply flex flex-col gap-4 justify-center sm:p-4 lg:p-6 lg:pl-14 w-full lg:w-[45%] xl:w-[35%] items-center
+}
+.login-view{
+    @apply bg-white h-full sm:h-fit w-full max-w-[500px] sm:rounded-xl lg:rounded-3xl shadow-xl p-8 max-md:py-14 md:max-h-[600px] flex flex-col gap-8 justify-center
+}
+.login-header p{
+    @apply font-bold text-[25px] text-secondary
+}
+.login-header small{
+    @apply text-[15px] font-semibold text-sub-text
+}
+.login-header a{
+    @apply text-primary underline ml-2
+}
+.form-login{
+    @apply flex flex-col gap-2
+}
+.input-group{
+    @apply w-full drop-shadow-sm bg-none flex flex-col gap-2 mb-3
+}
+.input-group label{
+    @apply block text-[#7F6F6A] text-sm
+}
+.input-group input{
+    @apply w-full h-[60px] rounded-md outline-none px-4 border border-gray-200
+}
+.input-group span{
+    @apply w-full text-[14px]
+}
+.input-group input::placeholder{
+    @apply text-gray-600
+}
+.forgot-password{
+    @apply flex justify-end w-full
+}
+.forgot-password a{
+    @apply underline text-secondary
+}
+.login-btn{
+    @apply w-full bg-primary py-3 text-white mt-4 mb-2 rounded-md
+}
+.login-disabled-btn{
+    @apply cursor-not-allowed bg-disabled-bg text-disabled-text
+}
+.create-div{
+    @apply my-6
+}
+.create-div a{
+    @apply underline  text-slate-900
+}
