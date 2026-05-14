@@ -97,15 +97,25 @@ Respond ONLY with valid JSON in this exact format, no extra text, no markdown:
   "projectBrief": "A professional 2-3 sentence summary of the client's project for their quote document"
 }`;
 
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'ANTHROPIC_API_KEY is not set in environment variables.' }),
+    };
+  }
+
   try {
     const message = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1024,
       messages: [{ role: 'user', content: prompt }],
     });
 
     const raw = message.content[0].text.trim();
-    const parsed = JSON.parse(raw);
+
+    // Strip markdown code fences if the model wrapped the JSON
+    const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+    const parsed = JSON.parse(cleaned);
 
     return {
       statusCode: 200,
@@ -113,10 +123,13 @@ Respond ONLY with valid JSON in this exact format, no extra text, no markdown:
       body: JSON.stringify(parsed),
     };
   } catch (err) {
-    console.error('AI error:', err);
+    const detail = err?.message || String(err);
+    console.error('AI error:', detail);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'AI analysis failed. Please try again or choose manually.' }),
+      body: JSON.stringify({
+        error: `AI analysis failed: ${detail}. Please try again or choose manually.`,
+      }),
     };
   }
 };
