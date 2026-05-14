@@ -215,45 +215,49 @@ const StepClientDetails = ({ details, setDetails, onNext }) => {
   );
 };
 
-// ── STEP 1: AI CONVERSATION (3 turns) ──
+// ── STEP 1: AI CONVERSATION (dynamic turns, max 5) ──
+const MAX_TURNS = 5;
+
 const StepAIConversation = ({
   conversationState,
+  turnCount,
   currentQuestion,
   currentAnswer, setCurrentAnswer,
   aiError, aiResult,
-  onSubmitTurn,
+  onSubmitTurn, onSkipToResults,
   onContinue, onRestart, onSkip, onBack,
 }) => {
-  const isLoading = conversationState.startsWith('loading_');
+  const isLoading = conversationState === 'loading';
   const isResult  = conversationState === 'result';
 
-  const turnIndex = { q1: 0, loading_q2: 0, q2: 1, loading_q3: 1, q3: 2, loading_result: 2 }[conversationState] ?? 0;
-
-  const placeholders = [
-    'Tell me about your business, your idea, or what you\'re trying to build...',
-    'Your answer...',
-    'Your answer...',
-  ];
+  // Dots: one per completed turn + one active — grows as conversation progresses
+  const dotsToShow = Math.min(turnCount + 1, MAX_TURNS);
 
   return (
     <div className="step-content">
       {!isResult ? (
         <AnimatePresence mode="wait">
           <motion.div
-            key={conversationState}
+            key={`turn-${turnCount}-${isLoading}`}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
             transition={{ duration: 0.3 }}
             style={{ display: 'flex', flexDirection: 'column', gap: 20 }}
           >
-            {/* Progress dots */}
+            {/* Dynamic progress dots */}
             <div className="conv-progress">
-              {[0, 1, 2].map(i => (
-                <div key={i} className={`conv-dot ${i <= turnIndex ? 'active' : ''} ${i === turnIndex && !isLoading ? 'current' : ''}`} />
+              {Array.from({ length: dotsToShow }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`conv-dot ${i < turnCount ? 'completed' : ''} ${i === turnCount && !isLoading ? 'current' : ''}`}
+                />
               ))}
+              {turnCount < MAX_TURNS - 1 && !isLoading && (
+                <span className="conv-more">· · ·</span>
+              )}
               <span className="conv-progress-label">
-                {isLoading ? 'Thinking...' : `Question ${turnIndex + 1} of 3`}
+                {isLoading ? 'Thinking...' : `Question ${turnCount + 1}`}
               </span>
             </div>
 
@@ -279,7 +283,11 @@ const StepAIConversation = ({
                   className="form-input form-textarea conv-textarea"
                   value={currentAnswer}
                   onChange={e => setCurrentAnswer(e.target.value)}
-                  placeholder={placeholders[turnIndex]}
+                  placeholder={
+                    turnCount === 0
+                      ? 'Tell me about your business, your idea, or what you\'re trying to build...'
+                      : 'Your answer...'
+                  }
                   rows={5}
                 />
 
@@ -287,12 +295,17 @@ const StepAIConversation = ({
                   <button className="btn-ghost" onClick={onBack}>← Back</button>
                   <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                     <button className="btn-ghost" onClick={onSkip}>Choose manually →</button>
+                    {turnCount > 0 && (
+                      <button className="btn-ghost" onClick={onSkipToResults}>
+                        That's enough, build my quote →
+                      </button>
+                    )}
                     <button
                       className="btn-ai"
                       disabled={currentAnswer.trim().length < 5}
                       onClick={onSubmitTurn}
                     >
-                      {turnIndex < 2 ? 'Continue →' : '✨ Build my quote'}
+                      Continue →
                     </button>
                   </div>
                 </div>
@@ -670,8 +683,8 @@ const PricingPage = () => {
   const [projectBrief, setProjectBrief]         = useState('');
   const [emailStatus, setEmailStatus]           = useState('idle');
 
-  // Conversation state
-  const [conversationState, setConversationState] = useState('q1');
+  // Conversation state — 'asking' | 'loading' | 'result'
+  const [conversationState, setConversationState] = useState('asking');
   const [conversationTurns, setConversationTurns] = useState([]);
   const [currentQuestion, setCurrentQuestion]     = useState('');
   const [currentAnswer, setCurrentAnswer]         = useState('');
@@ -681,16 +694,17 @@ const PricingPage = () => {
   const totals = calculateTotal(projectType, selectedFeatures, selectedAddons, timeline, currency.code);
   const aiUsed = aiSelectedIds.size > 0;
 
-  // Set opening question when client details are entered and we move to step 1
+  // Set opening question when entering step 1
   useEffect(() => {
     if (step === 1 && conversationTurns.length === 0 && !currentQuestion) {
       const firstName = clientDetails.name?.split(' ')[0] || 'there';
       const budgetLine = clientDetails.budget
-        ? ` You've mentioned a budget of ${clientDetails.budget} — that's helpful context and I'll keep that in mind.`
+        ? ` You've mentioned a budget of ${clientDetails.budget} — helpful context, I'll keep that in mind.`
         : '';
       setCurrentQuestion(
         `Hey ${firstName}! Let's figure out exactly what you need.${budgetLine} Tell me about your business or idea, and what you're hoping a website will help you do. Just say it however comes naturally — no tech speak needed.`
       );
+      setConversationState('asking');
     }
   }, [step, clientDetails.name, clientDetails.budget, conversationTurns.length, currentQuestion]);
 
@@ -712,86 +726,83 @@ const PricingPage = () => {
     );
   };
 
-  const handleSubmitTurn = async () => {
-    if (!currentAnswer.trim()) return;
+  const applyAIFinal = (data) => {
+    const type = PROJECT_TYPES.find(t => t.id === data.suggestedTypeId) || PROJECT_TYPES[0];
+    setProjectType(type);
+    setTimeline('standard');
 
-    const turnIndex = conversationTurns.length; // 0, 1, or 2
-    const isFinal   = turnIndex >= 2;
+    const typeFeatures = FEATURES_BY_TYPE[type.id] || [];
+    const features = (data.suggestedFeatureIds || [])
+      .map(id => typeFeatures.find(f => f.id === id)).filter(Boolean);
+    setSelectedFeatures(features);
 
-    setConversationState(isFinal ? 'loading_result' : `loading_q${turnIndex + 2}`);
+    const addons = (data.suggestedAddonIds || [])
+      .map(id => ADDONS.find(a => a.id === id)).filter(Boolean);
+    setSelectedAddons(addons);
+
+    setAiSelectedIds(new Set([...features.map(f => f.id), ...addons.map(a => a.id)]));
+    if (data.projectBrief) setProjectBrief(data.projectBrief);
+
+    setAiResult({
+      reasoning: data.reasoning,
+      projectBrief: data.projectBrief,
+      preselectedType: type,
+      preselectedFeatureCount: features.length,
+      preselectedAddonCount: addons.length,
+    });
+    setConversationState('result');
+  };
+
+  const callAI = async (conversation, forceFinal) => {
+    setConversationState('loading');
     setAiError('');
-
-    const thisConversation = [
-      ...conversationTurns,
-      { question: currentQuestion, answer: currentAnswer.trim() },
-    ];
-
     try {
       const res = await fetch('/.netlify/functions/analyse-project', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          turn: isFinal ? 'final' : `q${turnIndex + 2}`,
-          conversation: thisConversation,
+          turn: forceFinal ? 'final' : 'next',
+          conversation,
           clientBudget: clientDetails.budget || null,
+          maxTurns: MAX_TURNS,
           allTypes: PROJECT_TYPES,
           allFeatures: FEATURES_BY_TYPE,
           allAddons: ADDONS,
         }),
       });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Request failed');
-      }
-
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Request failed'); }
       const data = await res.json();
-
-      // Save this turn now that the API call succeeded
-      setConversationTurns(thisConversation);
-      setCurrentAnswer('');
-
-      if (isFinal) {
-        const type = PROJECT_TYPES.find(t => t.id === data.suggestedTypeId) || PROJECT_TYPES[0];
-        setProjectType(type);
-        setTimeline('standard');
-
-        const typeFeatures = FEATURES_BY_TYPE[type.id] || [];
-        const features = (data.suggestedFeatureIds || [])
-          .map(id => typeFeatures.find(f => f.id === id))
-          .filter(Boolean);
-        setSelectedFeatures(features);
-
-        const addons = (data.suggestedAddonIds || [])
-          .map(id => ADDONS.find(a => a.id === id))
-          .filter(Boolean);
-        setSelectedAddons(addons);
-
-        const aiIds = new Set([...features.map(f => f.id), ...addons.map(a => a.id)]);
-        setAiSelectedIds(aiIds);
-
-        if (data.projectBrief) setProjectBrief(data.projectBrief);
-
-        setAiResult({
-          reasoning: data.reasoning,
-          projectBrief: data.projectBrief,
-          preselectedType: type,
-          preselectedFeatureCount: features.length,
-          preselectedAddonCount: addons.length,
-        });
-        setConversationState('result');
+      if (data.type === 'final') {
+        applyAIFinal(data);
       } else {
         setCurrentQuestion(data.question);
-        setConversationState(`q${turnIndex + 2}`);
+        setConversationState('asking');
       }
     } catch (err) {
       setAiError(err.message || 'Something went wrong. Try again or choose manually.');
-      setConversationState(`q${turnIndex + 1}`);
+      setConversationState('asking');
     }
   };
 
+  const handleSubmitTurn = async () => {
+    if (!currentAnswer.trim()) return;
+    const updated = [...conversationTurns, { question: currentQuestion, answer: currentAnswer.trim() }];
+    setConversationTurns(updated);
+    setCurrentAnswer('');
+    await callAI(updated, false);
+  };
+
+  const handleSkipToResults = async () => {
+    const base = currentAnswer.trim()
+      ? [...conversationTurns, { question: currentQuestion, answer: currentAnswer.trim() }]
+      : conversationTurns;
+    setConversationTurns(base);
+    setCurrentAnswer('');
+    await callAI(base, true);
+  };
+
   const resetConversation = () => {
-    setConversationState('q1');
+    setConversationState('asking');
     setConversationTurns([]);
     setCurrentQuestion('');
     setCurrentAnswer('');
@@ -946,12 +957,14 @@ const PricingPage = () => {
                 {step === 1 && (
                   <StepAIConversation
                     conversationState={conversationState}
+                    turnCount={conversationTurns.length}
                     currentQuestion={currentQuestion}
                     currentAnswer={currentAnswer}
                     setCurrentAnswer={setCurrentAnswer}
                     aiError={aiError}
                     aiResult={aiResult}
                     onSubmitTurn={handleSubmitTurn}
+                    onSkipToResults={handleSkipToResults}
                     onSkip={() => goToStep(2)}
                     onContinue={() => goToStep(2)}
                     onRestart={resetConversation}

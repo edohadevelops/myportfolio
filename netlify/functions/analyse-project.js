@@ -40,145 +40,122 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body.' }) };
   }
 
-  const { turn, conversation, clientBudget, allTypes, allFeatures, allAddons } = body;
+  const { turn, conversation, clientBudget, maxTurns = 5, allTypes, allFeatures, allAddons } = body;
 
-  if (!turn || !conversation || !Array.isArray(conversation)) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: 'Missing required fields: turn and conversation.' }),
-    };
+  if (!conversation || !Array.isArray(conversation)) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Missing conversation array.' }) };
   }
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-  // Format conversation history for the prompt
   const convHistory = conversation
-    .map((t) => `You asked: "${t.question}"\nThey said: "${t.answer}"`)
+    .map(t => [t.question ? `You asked: "${t.question}"` : null, `Client said: "${t.answer}"`].filter(Boolean).join('\n'))
     .join('\n\n');
 
-  // ── FOLLOW-UP QUESTIONS (turns q2 and q3) ──
-  if (turn === 'q2' || turn === 'q3') {
-    const isSecond = turn === 'q2';
+  const typesContext = (allTypes || [])
+    .map(t => `  id:"${t.id}" — ${t.name} ($${t.basePrice}): ${t.description}`)
+    .join('\n');
 
-    const focus = isSecond
-      ? 'Ask one warm, specific follow-up question. Focus on whether they need customers to do anything online — like book, pay, sign up, or create an account. Or dig into a key feature they mentioned. Keep it under 45 words.'
-      : 'Ask one final question. Focus on their timeline or any specific tools or integrations they might need — like maps, social media feeds, payment options, or anything else. Keep it under 45 words.';
+  const featuresContext = Object.entries(allFeatures || {}).map(([typeId, features]) => {
+    const typeName = (allTypes || []).find(t => t.id === typeId)?.name || typeId;
+    const list = features.map(f => `    id:"${f.id}" — ${f.name} ($${f.price})`).join('\n');
+    return `  ${typeName}:\n${list}`;
+  }).join('\n\n');
 
-    const prompt = `You are having a friendly conversation with a potential client to help them figure out what kind of website they need. You work for EdohaDeveloped.
+  const addonsContext = (allAddons || [])
+    .map(a => `  id:"${a.id}" — ${a.name} (${a.isPercentage ? `+${a.percentage}%` : `$${a.price}`})`)
+    .join('\n');
 
-Here is the conversation so far:
+  const budgetNote = clientBudget
+    ? `The client has a budget of "${clientBudget}". Be budget-conscious — avoid suggesting features that would clearly push past their range, but don't skip genuinely essential ones.`
+    : '';
 
-${convHistory}
+  const turnCount = conversation.length;
+  const forceFinish = turn === 'final' || turnCount >= maxTurns;
 
-${focus}
+  const finalFormat = `{
+  "type": "final",
+  "suggestedTypeId": "portfolio | landing | website | webapp | ecommerce",
+  "reasoning": "one friendly sentence explaining the choice",
+  "suggestedFeatureIds": ["relevant feature ids from the chosen type only"],
+  "suggestedAddonIds": ["relevant addon ids or empty array"],
+  "projectBrief": "2 to 3 sentence professional summary for the quote document"
+}`;
 
-Write ONLY the question. No intro, no label, just the question itself. Conversational and friendly tone.`;
+  const prompt = forceFinish
+    ? `You are helping a client figure out what website they need, on behalf of EdohaDeveloped.
 
-    try {
-      const msg = await client.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 100,
-        messages: [{ role: 'user', content: prompt }],
-      });
-
-      return {
-        statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: msg.content[0].text.trim() }),
-      };
-    } catch (err) {
-      console.error('Follow-up error:', err?.message);
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: `Follow-up question failed: ${err?.message}` }),
-      };
-    }
-  }
-
-  // ── FINAL ANALYSIS (turn = 'final') ──
-  if (turn === 'final') {
-    const typesContext = (allTypes || [])
-      .map(t => `  id:"${t.id}" — ${t.name} ($${t.basePrice}): ${t.description}`)
-      .join('\n');
-
-    const featuresContext = Object.entries(allFeatures || {}).map(([typeId, features]) => {
-      const typeName = (allTypes || []).find(t => t.id === typeId)?.name || typeId;
-      const list = features.map(f => `    id:"${f.id}" — ${f.name} ($${f.price})`).join('\n');
-      return `  ${typeName}:\n${list}`;
-    }).join('\n\n');
-
-    const addonsContext = (allAddons || [])
-      .map(a => `  id:"${a.id}" — ${a.name} (${a.isPercentage ? `+${a.percentage}%` : `$${a.price}`})`)
-      .join('\n');
-
-    const budgetNote = clientBudget
-      ? `CLIENT BUDGET: The client indicated a budget of "${clientBudget}". Factor this in — avoid recommending features that would clearly push the total beyond their stated range, but do not sacrifice must-have functionality. If features are essential, include them and note the fit.`
-      : '';
-
-    const prompt = `You are helping a client figure out what kind of website they need for EdohaDeveloped. Based on everything they told you, select the right project type, features, and add-ons, then write a professional project brief.
-
-FULL CONVERSATION:
-${convHistory}
+CONVERSATION (${turnCount} exchange${turnCount !== 1 ? 's' : ''}):
+${convHistory || '(no exchanges yet)'}
 
 ${budgetNote}
 
 AVAILABLE PROJECT TYPES:
 ${typesContext}
 
-AVAILABLE FEATURES (grouped by project type):
+AVAILABLE FEATURES (by project type):
 ${featuresContext}
 
 AVAILABLE ADD-ONS:
 ${addonsContext}
 
-Your job:
-1. Pick the single best project type based on what they described
-2. Select the most relevant feature IDs from that type — be thorough but budget-conscious if a budget was provided
-3. Select any relevant add-on IDs (hosting, domain if mentioned; rush only if they indicated urgency)
-4. Write one friendly sentence explaining why you chose this project type
-5. Write a clean 2 to 3 sentence project brief for their quote document
-
-Rules:
-  suggestedTypeId must be one of the available type IDs
-  suggestedFeatureIds must only use IDs from the chosen type's feature list
-  suggestedAddonIds must only use IDs from the add-ons list
-  The projectBrief should sound professional but readable
+You now have all the information you are going to get. Make your best recommendation based on this conversation.
 
 Respond with ONLY valid JSON, no markdown, no extra text:
-{
-  "suggestedTypeId": "portfolio | landing | website | webapp | ecommerce",
-  "reasoning": "One friendly sentence explaining why this type fits",
-  "suggestedFeatureIds": ["feature id", "..."],
-  "suggestedAddonIds": ["addon id or empty array"],
-  "projectBrief": "2 to 3 sentence professional summary of the client project"
-}`;
+${finalFormat}`
 
-    try {
-      const msg = await client.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1024,
-        messages: [{ role: 'user', content: prompt }],
-      });
+    : `You are having a friendly conversation with a potential client to help them figure out what website they need, on behalf of EdohaDeveloped.
 
-      const raw = msg.content[0].text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-      const parsed = JSON.parse(raw);
+CONVERSATION SO FAR (${turnCount} exchange${turnCount !== 1 ? 's' : ''} completed, max ${maxTurns}):
+${convHistory || '(no exchanges yet)'}
 
-      return {
-        statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(parsed),
-      };
-    } catch (err) {
-      console.error('Final analysis error:', err?.message);
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: `Analysis failed: ${err?.message}. You can still choose manually.` }),
-      };
-    }
+${budgetNote}
+
+AVAILABLE PROJECT TYPES:
+${typesContext}
+
+AVAILABLE FEATURES (by project type):
+${featuresContext}
+
+AVAILABLE ADD-ONS:
+${addonsContext}
+
+Now decide: do you have enough information to confidently recommend a project type and the right features?
+
+You have enough if you know: what their business does, what they want the site to do, and any key functionality they need.
+You need more info if there is a meaningful gap that would change your recommendation.
+
+If you need one more specific piece of information — ask it. Keep it under 50 words, conversational, friendly.
+If you have enough — return the full selection. Do not ask more questions just for the sake of it.
+
+Respond with ONLY valid JSON, no markdown, no extra text.
+
+If you need more info:
+{ "type": "question", "question": "your question here" }
+
+If you have enough info:
+${finalFormat}`;
+
+  try {
+    const msg = await client.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    const raw = msg.content[0].text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+    const parsed = JSON.parse(raw);
+
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(parsed),
+    };
+  } catch (err) {
+    console.error('analyse-project error:', err?.message);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: `Analysis failed: ${err?.message}. You can choose manually instead.` }),
+    };
   }
-
-  return {
-    statusCode: 400,
-    body: JSON.stringify({ error: `Unknown turn value: "${turn}". Expected q2, q3, or final.` }),
-  };
 };

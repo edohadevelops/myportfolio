@@ -133,6 +133,9 @@
   @apply w-2.5 h-2.5 rounded-full transition-all duration-300;
   background: #E5E7EB;
 }
+.conv-dot.completed {
+  background: #7C3AED;
+}
 .conv-dot.active {
   background: #C4B5FD;
 }
@@ -140,6 +143,12 @@
   background: #9333EA;
   transform: scale(1.25);
   box-shadow: 0 0 0 3px rgba(147,51,234,0.2);
+}
+.conv-more {
+  @apply text-[13px] font-bold tracking-wider;
+  color: #C4B5FD;
+  letter-spacing: 0.15em;
+  line-height: 1;
 }
 .conv-progress-label {
   @apply text-[12px] font-medium ml-2;
