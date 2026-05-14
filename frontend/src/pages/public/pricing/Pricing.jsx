@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   PROJECT_TYPES,
@@ -14,34 +14,19 @@ import './style.css';
 
 const STEPS = [
   { id: 0, label: 'You'      },
-  { id: 1, label: 'Tell Us'  },
+  { id: 1, label: 'Chat'     },
   { id: 2, label: 'Project'  },
   { id: 3, label: 'Features' },
-  { id: 4, label: 'Add-ons'  },
+  { id: 4, label: 'Extras'   },
   { id: 5, label: 'Timeline' },
-  { id: 6, label: 'Summary'  },
+  { id: 6, label: 'Your Plan'},
 ];
-
-const AI_LOADING_MSGS = [
-  'Reading your description...',
-  'Understanding what you need...',
-  'Matching the right project type...',
-  'Selecting the best features...',
-  'Building your quote...',
-];
-
-// ── CLAUDE LOADER ──
-const ClaudeLoader = () => (
-  <div className="claude-loader">
-    <span /><span /><span />
-  </div>
-);
 
 // ── SIDEBAR ──
 const Sidebar = ({ step, projectType, selectedFeatures, selectedAddons, currency, setCurrency, onRemoveFeature, onRemoveAddon, totals }) => (
   <aside className="pricing-sidebar">
     <div className="sidebar-header">
-      <h3 className="sidebar-title">Your Quote</h3>
+      <h3 className="sidebar-title">Your Plan</h3>
       <div className="sidebar-currency">
         {Object.values(CURRENCY).map(c => (
           <button
@@ -56,11 +41,11 @@ const Sidebar = ({ step, projectType, selectedFeatures, selectedAddons, currency
     </div>
 
     {!projectType ? (
-      <p className="sidebar-empty">Your selections will appear here once we analyse your project.</p>
+      <p className="sidebar-empty">Once we figure out what you need, your selections will show up here.</p>
     ) : (
       <>
         <div className="sidebar-section">
-          <p className="sidebar-section-label">Project Type</p>
+          <p className="sidebar-section-label">Project</p>
           <div className="sidebar-item">
             <span>{projectType.icon} {projectType.name}</span>
             <span className="sidebar-price">{currency.symbol}{Math.round(projectType.basePrice * currency.rate).toLocaleString()}</span>
@@ -82,16 +67,14 @@ const Sidebar = ({ step, projectType, selectedFeatures, selectedAddons, currency
               </div>
             ))}
             {selectedFeatures.length >= DISCOUNT_THRESHOLD && (
-              <div className="sidebar-discount">
-                🎉 {DISCOUNT_PERCENTAGE}% discount applied!
-              </div>
+              <div className="sidebar-discount">10% discount applied</div>
             )}
           </div>
         )}
 
         {selectedAddons.length > 0 && (
           <div className="sidebar-section">
-            <p className="sidebar-section-label">Add-ons</p>
+            <p className="sidebar-section-label">Extras</p>
             {selectedAddons.map(a => (
               <div key={a.id} className="sidebar-item">
                 <span className="sidebar-item-name">{a.name}</span>
@@ -116,11 +99,11 @@ const Sidebar = ({ step, projectType, selectedFeatures, selectedAddons, currency
             </div>
           )}
           <div className="sidebar-total-row">
-            <span className="sidebar-total-label">Total Estimate</span>
+            <span className="sidebar-total-label">Estimated Total</span>
             <span className="sidebar-total-amount">{currency.symbol}{totals.total.toLocaleString()}</span>
           </div>
           {currency.code === 'NGN' && (
-            <p className="sidebar-usd-note">≈ ${Math.round(totals.total / currency.rate).toLocaleString()} USD</p>
+            <p className="sidebar-usd-note">approx. ${Math.round(totals.total / currency.rate).toLocaleString()} USD</p>
           )}
         </div>
       </>
@@ -134,8 +117,8 @@ const StepClientDetails = ({ details, setDetails, onNext }) => {
   return (
     <div className="step-content">
       <div className="step-question">
-        <h2 className="step-title">Before we start, tell us a little about you.</h2>
-        <p className="step-sub">This helps us personalise your quote and get in touch with you.</p>
+        <h2 className="step-title">First, let's get to know you a little.</h2>
+        <p className="step-sub">Just a couple of quick details so we can personalise your quote and follow up with you afterwards.</p>
       </div>
       <div className="form-fields">
         <div className="form-field">
@@ -158,76 +141,107 @@ const StepClientDetails = ({ details, setDetails, onNext }) => {
           />
         </div>
         <div className="form-field">
-          <label className="form-label">Company / Business Name <span className="form-optional">(optional)</span></label>
+          <label className="form-label">Business or Company Name <span className="form-optional">(optional)</span></label>
           <input
             className="form-input"
-            placeholder="e.g. Acme Ltd or leave blank"
+            placeholder="e.g. Acme Ltd or leave it blank"
             value={details.company}
             onChange={e => setDetails(d => ({ ...d, company: e.target.value }))}
           />
         </div>
       </div>
       <button className="btn-primary" disabled={!valid} onClick={onNext}>
-        Let's Build Your Quote →
+        Let's go →
       </button>
     </div>
   );
 };
 
-// ── STEP 1: AI INTERVIEW ──
-const StepAIInterview = ({
-  clientDetails, notes, setNotes,
-  aiLoading, aiLoadingMsg, aiError, aiResult,
-  onAnalyse, onSkip, onContinue, onRestart, onBack,
+// ── STEP 1: AI CONVERSATION (3 turns) ──
+const StepAIConversation = ({
+  conversationState,
+  currentQuestion,
+  currentAnswer, setCurrentAnswer,
+  aiError, aiResult,
+  onSubmitTurn,
+  onContinue, onRestart, onSkip, onBack,
 }) => {
-  const firstName = clientDetails.name?.split(' ')[0] || 'there';
+  const isLoading = conversationState.startsWith('loading_');
+  const isResult  = conversationState === 'result';
+
+  const turnIndex = { q1: 0, loading_q2: 0, q2: 1, loading_q3: 1, q3: 2, loading_result: 2 }[conversationState] ?? 0;
+
+  const placeholders = [
+    'Tell me about your business, your idea, or what you\'re trying to build...',
+    'Your answer...',
+    'Your answer...',
+  ];
 
   return (
     <div className="step-content">
-      {!aiResult ? (
-        <>
-          <div className="step-question">
-            <h2 className="step-title">Tell us about your project, {firstName}.</h2>
-            <p className="step-sub">
-              Describe what you need in plain English — who you are, what your business does, and what
-              you want the site or app to do. Our AI will read it and automatically select the best
-              project type and features for you.
-            </p>
-          </div>
-
-          <div className="form-field">
-            <textarea
-              className="form-input form-textarea"
-              style={{ minHeight: 160, fontSize: 15, lineHeight: 1.75 }}
-              placeholder="e.g. I run a hair salon in Lagos and I want my customers to book appointments online, see photos of my work, and contact me easily..."
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              disabled={aiLoading}
-              rows={7}
-            />
-          </div>
-
-          {aiError && <p className="ai-error">{aiError}</p>}
-
-          <div className="step-nav" style={{ flexWrap: 'wrap', justifyContent: 'space-between' }}>
-            <button className="btn-ghost" onClick={onBack} disabled={aiLoading}>← Back</button>
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-              <button className="btn-ghost" onClick={onSkip} disabled={aiLoading}>
-                I'll choose manually →
-              </button>
-              <button
-                className="btn-ai"
-                disabled={aiLoading || notes.trim().length < 10}
-                onClick={onAnalyse}
-              >
-                {aiLoading
-                  ? <><ClaudeLoader /> {aiLoadingMsg}</>
-                  : '✨ Analyse My Project'
-                }
-              </button>
+      {!isResult ? (
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={conversationState}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -16 }}
+            transition={{ duration: 0.3 }}
+            style={{ display: 'flex', flexDirection: 'column', gap: 20 }}
+          >
+            {/* Progress dots */}
+            <div className="conv-progress">
+              {[0, 1, 2].map(i => (
+                <div key={i} className={`conv-dot ${i <= turnIndex ? 'active' : ''} ${i === turnIndex && !isLoading ? 'current' : ''}`} />
+              ))}
+              <span className="conv-progress-label">
+                {isLoading ? 'Thinking...' : `Question ${turnIndex + 1} of 3`}
+              </span>
             </div>
-          </div>
-        </>
+
+            {/* AI chat bubble */}
+            <div className="ai-chat-wrap">
+              <div className="ai-chat-avatar">✦</div>
+              <div className="ai-chat-bubble">
+                {isLoading ? (
+                  <div className="ai-thinking">
+                    <span /><span /><span />
+                  </div>
+                ) : (
+                  <p>{currentQuestion}</p>
+                )}
+              </div>
+            </div>
+
+            {!isLoading && (
+              <>
+                {aiError && <p className="ai-error">{aiError}</p>}
+
+                <textarea
+                  className="form-input form-textarea conv-textarea"
+                  value={currentAnswer}
+                  onChange={e => setCurrentAnswer(e.target.value)}
+                  placeholder={placeholders[turnIndex]}
+                  rows={5}
+                />
+
+                <div className="step-nav" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                  <button className="btn-ghost" onClick={onBack}>← Back</button>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <button className="btn-ghost" onClick={onSkip}>Choose manually →</button>
+                    <button
+                      className="btn-ai"
+                      disabled={currentAnswer.trim().length < 5}
+                      onClick={onSubmitTurn}
+                    >
+                      {turnIndex < 2 ? 'Continue →' : '✨ Build my quote'}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </motion.div>
+        </AnimatePresence>
       ) : (
         <motion.div
           className="ai-result-card"
@@ -236,45 +250,43 @@ const StepAIInterview = ({
           transition={{ duration: 0.4, ease: 'easeOut' }}
         >
           <div className="ai-result-header">
-            <div className="ai-result-sparkle">✨</div>
+            <div className="ai-result-sparkle">✦</div>
             <div>
-              <h3 className="ai-result-title">All set! Here's what I understood.</h3>
-              {aiResult.reasoning && (
+              <h3 className="ai-result-title">Got it — here's what I've put together for you.</h3>
+              {aiResult?.reasoning && (
                 <p className="ai-result-reasoning">{aiResult.reasoning}</p>
               )}
             </div>
           </div>
 
-          {aiResult.projectBrief && (
-            <blockquote className="ai-result-brief">
-              "{aiResult.projectBrief}"
-            </blockquote>
+          {aiResult?.projectBrief && (
+            <blockquote className="ai-result-brief">"{aiResult.projectBrief}"</blockquote>
           )}
 
           <div className="ai-result-pills">
-            {aiResult.preselectedType && (
+            {aiResult?.preselectedType && (
               <span className="ai-pill ai-pill-type">
                 {aiResult.preselectedType.icon} {aiResult.preselectedType.name}
               </span>
             )}
-            {aiResult.preselectedFeatureCount > 0 && (
+            {aiResult?.preselectedFeatureCount > 0 && (
               <span className="ai-pill ai-pill-features">
-                {aiResult.preselectedFeatureCount} feature{aiResult.preselectedFeatureCount !== 1 ? 's' : ''} selected
+                {aiResult.preselectedFeatureCount} feature{aiResult.preselectedFeatureCount !== 1 ? 's' : ''} picked
               </span>
             )}
-            {aiResult.preselectedAddonCount > 0 && (
+            {aiResult?.preselectedAddonCount > 0 && (
               <span className="ai-pill ai-pill-addons">
-                {aiResult.preselectedAddonCount} add-on{aiResult.preselectedAddonCount !== 1 ? 's' : ''} selected
+                {aiResult.preselectedAddonCount} extra{aiResult.preselectedAddonCount !== 1 ? 's' : ''} added
               </span>
             )}
           </div>
 
           <p className="ai-result-note">
-            Everything has been pre-selected for you. You'll review each step next — add, remove, or change anything you like.
+            Everything has been pre-selected based on our chat. Go through each step to review it — change anything you want.
           </p>
 
           <div className="step-nav">
-            <button className="btn-ghost" onClick={onRestart}>← Re-describe project</button>
+            <button className="btn-ghost" onClick={onRestart}>← Start over</button>
             <button className="btn-primary" onClick={onContinue}>Review my selections →</button>
           </div>
         </motion.div>
@@ -284,14 +296,14 @@ const StepAIInterview = ({
 };
 
 // ── STEP 2: PROJECT TYPE ──
-const StepProjectType = ({ selected, onSelect, onNext, onBack }) => (
+const StepProjectType = ({ selected, aiUsed, onSelect, onNext, onBack }) => (
   <div className="step-content">
     <div className="step-question">
-      <h2 className="step-title">What are we building for you?</h2>
+      <h2 className="step-title">What are we building?</h2>
       <p className="step-sub">
-        {selected
-          ? 'Our AI suggested the type below based on your description. Change it if needed.'
-          : 'Select the option that best describes your project. Not sure? Pick the closest one — we can adjust later.'}
+        {aiUsed && selected
+          ? 'Based on our chat, this is what I think fits best. Feel free to change it if something else feels more right.'
+          : 'Pick the option that best describes what you\'re after. Not sure? Go with the closest match and we\'ll sort out the details together.'}
       </p>
     </div>
     <div className="type-grid">
@@ -304,14 +316,10 @@ const StepProjectType = ({ selected, onSelect, onNext, onBack }) => (
           <span className="type-icon">{t.icon}</span>
           <h3 className="type-name">{t.name}</h3>
           <p className="type-desc">{t.description}</p>
-          <div className="type-price">
-            Starting at <strong>${t.basePrice}</strong>
-          </div>
+          <div className="type-price">Starting from <strong>${t.basePrice}</strong></div>
           <div className="type-includes">
-            <p className="type-includes-label">Included in base:</p>
-            <ul>
-              {t.includes.map(i => <li key={i}>{i}</li>)}
-            </ul>
+            <p className="type-includes-label">What's in the base package:</p>
+            <ul>{t.includes.map(i => <li key={i}>{i}</li>)}</ul>
           </div>
         </button>
       ))}
@@ -319,7 +327,7 @@ const StepProjectType = ({ selected, onSelect, onNext, onBack }) => (
     <div className="step-nav">
       <button className="btn-ghost" onClick={onBack}>← Back</button>
       <button className="btn-primary" disabled={!selected} onClick={onNext}>
-        Next: Choose Features →
+        Next: Pick your features →
       </button>
     </div>
   </div>
@@ -328,21 +336,17 @@ const StepProjectType = ({ selected, onSelect, onNext, onBack }) => (
 // ── STEP 3: FEATURES ──
 const StepFeatures = ({ projectType, selected, aiSelectedIds, onToggle, onNext, onBack }) => {
   const features = FEATURES_BY_TYPE[projectType?.id] || [];
-  const hasAiSelections = aiSelectedIds.size > 0;
-
   return (
     <div className="step-content">
       <div className="step-question">
-        <h2 className="step-title">What should your project be able to do?</h2>
+        <h2 className="step-title">What do you need your site to do?</h2>
         <p className="step-sub">
-          {hasAiSelections
-            ? 'Our AI pre-selected the features below based on your description. Add more or remove any you don\'t need. Select 5+ for a 10% discount.'
-            : 'Select every feature you need. Select 5 or more for a 10% discount on features.'}
+          Your base package already covers the essentials listed on the previous step. These are the extras you can layer on top. Pick 5 or more and you'll get 10% off the features total.
         </p>
       </div>
       {selected.length >= DISCOUNT_THRESHOLD && (
         <div className="discount-banner">
-          🎉 You've selected {selected.length} features — a {DISCOUNT_PERCENTAGE}% discount has been applied to your features total!
+          Nice one — {selected.length} features selected and your 10% discount has kicked in.
         </div>
       )}
       <div className="features-grid">
@@ -355,26 +359,22 @@ const StepFeatures = ({ projectType, selected, aiSelectedIds, onToggle, onNext, 
               className={`feature-card ${isSelected ? 'selected' : ''}`}
               onClick={() => onToggle(f)}
             >
-              {isAI && <span className="ai-badge">AI</span>}
-              <div className="feature-card-top">
-                <span className="feature-name">{f.name}</span>
-                <div className="feature-card-meta">
-                  <span className="feature-price">${f.price}</span>
-                  <div className={`feature-check ${isSelected ? 'checked' : ''}`}>
-                    {isSelected ? '✓' : '+'}
-                  </div>
+              {isAI && <span className="ai-badge">AI pick</span>}
+              <span className="feature-name">{f.name}</span>
+              <p className="feature-desc">{f.description}</p>
+              <div className="feature-footer">
+                <span className="feature-price">${f.price}</span>
+                <div className={`feature-check ${isSelected ? 'checked' : ''}`}>
+                  {isSelected ? '✓' : '+'}
                 </div>
               </div>
-              <p className="feature-desc">{f.description}</p>
             </button>
           );
         })}
       </div>
       <div className="step-nav">
         <button className="btn-ghost" onClick={onBack}>← Back</button>
-        <button className="btn-primary" onClick={onNext}>
-          Next: Add-ons →
-        </button>
+        <button className="btn-primary" onClick={onNext}>Next: Extras →</button>
       </div>
     </div>
   );
@@ -384,11 +384,9 @@ const StepFeatures = ({ projectType, selected, aiSelectedIds, onToggle, onNext, 
 const StepAddons = ({ selected, aiSelectedIds, onToggle, onNext, onBack }) => (
   <div className="step-content">
     <div className="step-question">
-      <h2 className="step-title">Want to go further?</h2>
+      <h2 className="step-title">Anything else you'd like to add?</h2>
       <p className="step-sub">
-        {aiSelectedIds.size > 0
-          ? 'Our AI suggested the add-ons below. These extras can significantly improve your project\'s quality and longevity.'
-          : 'These extras are not required but can significantly improve your project\'s quality, visibility, and longevity.'}
+        These extras aren't required, but they can make a real difference to the quality, lifespan, and visibility of your project.
       </p>
     </div>
     <div className="features-grid">
@@ -401,28 +399,24 @@ const StepAddons = ({ selected, aiSelectedIds, onToggle, onNext, onBack }) => (
             className={`feature-card ${isSelected ? 'selected' : ''}`}
             onClick={() => onToggle(a)}
           >
-            {isAI && <span className="ai-badge">AI</span>}
-            <div className="feature-card-top">
-              <span className="feature-name">{a.name}</span>
-              <div className="feature-card-meta">
-                <span className="feature-price">
-                  {a.isPercentage ? `+${a.percentage}%` : `$${a.price}`}
-                </span>
-                <div className={`feature-check ${isSelected ? 'checked' : ''}`}>
-                  {isSelected ? '✓' : '+'}
-                </div>
+            {isAI && <span className="ai-badge">AI pick</span>}
+            <span className="feature-name">{a.name}</span>
+            <p className="feature-desc">{a.description}</p>
+            <div className="feature-footer">
+              <span className="feature-price">
+                {a.isPercentage ? `+${a.percentage}%` : `$${a.price}`}
+              </span>
+              <div className={`feature-check ${isSelected ? 'checked' : ''}`}>
+                {isSelected ? '✓' : '+'}
               </div>
             </div>
-            <p className="feature-desc">{a.description}</p>
           </button>
         );
       })}
     </div>
     <div className="step-nav">
       <button className="btn-ghost" onClick={onBack}>← Back</button>
-      <button className="btn-primary" onClick={onNext}>
-        Next: Timeline →
-      </button>
+      <button className="btn-primary" onClick={onNext}>Next: Timeline →</button>
     </div>
   </div>
 );
@@ -433,9 +427,9 @@ const StepTimeline = ({ projectType, timeline, setTimeline, startDate, setStartD
   return (
     <div className="step-content">
       <div className="step-question">
-        <h2 className="step-title">When do you want to get started?</h2>
+        <h2 className="step-title">When are you thinking of getting started?</h2>
         <p className="step-sub">
-          Give us a preferred start date and an estimated duration. This helps us plan and gives you a realistic delivery window.
+          No pressure if you don't have a specific date yet. This just helps us plan things out and give you a realistic sense of when it'll be ready.
         </p>
       </div>
       <div className="timeline-fields">
@@ -450,7 +444,7 @@ const StepTimeline = ({ projectType, timeline, setTimeline, startDate, setStartD
           />
         </div>
         <div className="form-field">
-          <label className="form-label">Estimated Duration</label>
+          <label className="form-label">How long do you need it done in?</label>
           <select
             className="form-input form-select"
             value={timeline}
@@ -464,13 +458,13 @@ const StepTimeline = ({ projectType, timeline, setTimeline, startDate, setStartD
       </div>
       <div className="step-nav">
         <button className="btn-ghost" onClick={onBack}>← Back</button>
-        <button className="btn-primary" onClick={onNext}>See My Summary →</button>
+        <button className="btn-primary" onClick={onNext}>See my full plan →</button>
       </div>
     </div>
   );
 };
 
-// ── STEP 6: ANIMATED SUMMARY ──
+// ── STEP 6: SUMMARY ──
 const StepSummary = ({
   clientDetails, projectType, selectedFeatures, selectedAddons,
   timeline, startDate, totals, currency, projectBrief,
@@ -488,11 +482,9 @@ const StepSummary = ({
   return (
     <div className="step-content summary-content">
       <div className="step-question">
-        <h2 className="step-title">
-          Here's your project quote, {clientDetails.name?.split(' ')[0]}! 🎉
-        </h2>
+        <h2 className="step-title">Here's your website plan, {clientDetails.name?.split(' ')[0]}!</h2>
         <p className="step-sub">
-          Here's everything we'll build for you. Download your PDF or send it straight to Amen.
+          This is everything we've put together for you. Download it as a PDF to keep a copy, or send it straight to Amen to get the ball rolling.
         </p>
       </div>
 
@@ -503,7 +495,7 @@ const StepSummary = ({
             className="summary-item"
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.35, delay: i * 0.08 }}
+            transition={{ duration: 0.35, delay: i * 0.07 }}
           >
             <span className="summary-item-label">{item.label}</span>
             <span className="summary-item-price">{currency.symbol}{item.price?.toLocaleString()}</span>
@@ -515,9 +507,9 @@ const StepSummary = ({
             className="summary-item summary-discount"
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.35, delay: items.length * 0.08 }}
+            transition={{ duration: 0.35, delay: items.length * 0.07 }}
           >
-            <span>🎉 Loyalty Discount (10%)</span>
+            <span>10% loyalty discount</span>
             <span>-{currency.symbol}{totals.discount.toLocaleString()}</span>
           </motion.div>
         )}
@@ -527,14 +519,14 @@ const StepSummary = ({
         className="summary-total"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: items.length * 0.08 + 0.2 }}
+        transition={{ duration: 0.5, delay: items.length * 0.07 + 0.2 }}
       >
         <span>Total Estimate</span>
         <motion.span
           className="summary-total-amount"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: items.length * 0.08 + 0.5 }}
+          transition={{ delay: items.length * 0.07 + 0.5 }}
         >
           {currency.symbol}{totals.total.toLocaleString()}
         </motion.span>
@@ -545,12 +537,12 @@ const StepSummary = ({
           className="summary-timeline"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: items.length * 0.08 + 0.7 }}
+          transition={{ delay: items.length * 0.07 + 0.7 }}
         >
-          <span>⏱ Estimated Duration: {projectType?.timelineOptions?.find(t => t.value === timeline)?.label}</span>
+          <span>Duration: {projectType?.timelineOptions?.find(t => t.value === timeline)?.label}</span>
           {startDate && (
             <span>
-              📅 Start Date: {new Date(startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+              Start: {new Date(startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
             </span>
           )}
         </motion.div>
@@ -560,34 +552,32 @@ const StepSummary = ({
         className="summary-actions"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: items.length * 0.08 + 0.9 }}
+        transition={{ delay: items.length * 0.07 + 0.9 }}
       >
-        <button className="btn-primary" onClick={onDownloadPDF}>
-          📄 Download PDF Quote
-        </button>
+        <button className="btn-primary" onClick={onDownloadPDF}>Download PDF</button>
         <button
           className="btn-secondary"
           onClick={onSendEmail}
           disabled={emailStatus === 'sending' || emailStatus === 'sent'}
         >
-          {emailStatus === 'sent' ? '✓ Sent to Amen!' : emailStatus === 'sending' ? 'Sending...' : '📨 Send to Amen'}
+          {emailStatus === 'sent' ? 'Sent!' : emailStatus === 'sending' ? 'Sending...' : 'Send to Amen'}
         </button>
-        <button className="btn-ghost" onClick={onBack}>← Adjust selections</button>
+        <button className="btn-ghost" onClick={onBack}>← Go back and adjust</button>
       </motion.div>
 
       <motion.p
         className="summary-note"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: items.length * 0.08 + 1.1 }}
+        transition={{ delay: items.length * 0.07 + 1.1 }}
       >
-        Amen will follow up with you at <strong>{clientDetails.email}</strong> to discuss next steps and schedule a call.
+        Amen will follow up with you at <strong>{clientDetails.email}</strong> to chat through the details and get things moving.
       </motion.p>
     </div>
   );
 };
 
-// ── MAIN PRICING PAGE ──
+// ── MAIN PAGE ──
 const PricingPage = () => {
   const [step, setStep]                         = useState(0);
   const [currency, setCurrency]                 = useState(CURRENCY.USD);
@@ -598,15 +588,29 @@ const PricingPage = () => {
   const [aiSelectedIds, setAiSelectedIds]       = useState(new Set());
   const [timeline, setTimeline]                 = useState('none');
   const [startDate, setStartDate]               = useState('');
-  const [notes, setNotes]                       = useState('');
   const [projectBrief, setProjectBrief]         = useState('');
-  const [aiResult, setAiResult]                 = useState(null);
-  const [aiLoading, setAiLoading]               = useState(false);
-  const [aiLoadingMsg, setAiLoadingMsg]         = useState(AI_LOADING_MSGS[0]);
-  const [aiError, setAiError]                   = useState('');
   const [emailStatus, setEmailStatus]           = useState('idle');
 
+  // Conversation state
+  const [conversationState, setConversationState] = useState('q1');
+  const [conversationTurns, setConversationTurns] = useState([]);
+  const [currentQuestion, setCurrentQuestion]     = useState('');
+  const [currentAnswer, setCurrentAnswer]         = useState('');
+  const [aiResult, setAiResult]                   = useState(null);
+  const [aiError, setAiError]                     = useState('');
+
   const totals = calculateTotal(projectType, selectedFeatures, selectedAddons, currency.code);
+  const aiUsed = aiSelectedIds.size > 0;
+
+  // Set opening question when client details are entered and we move to step 1
+  useEffect(() => {
+    if (step === 1 && conversationTurns.length === 0 && !currentQuestion) {
+      const firstName = clientDetails.name?.split(' ')[0] || 'there';
+      setCurrentQuestion(
+        `Hey ${firstName}! Let's figure out exactly what you need. Tell me about your business or idea, and what you're hoping a website will help you do. Just say it however comes naturally — no tech speak needed.`
+      );
+    }
+  }, [step, clientDetails.name, conversationTurns.length, currentQuestion]);
 
   const handleProjectTypeSelect = (type) => {
     if (projectType?.id !== type.id) setSelectedFeatures([]);
@@ -626,79 +630,88 @@ const PricingPage = () => {
     );
   };
 
-  const handleAnalyse = async () => {
-    setAiLoading(true);
-    setAiError('');
-    setAiResult(null);
+  const handleSubmitTurn = async () => {
+    if (!currentAnswer.trim()) return;
 
-    let msgIdx = 0;
-    const msgTimer = setInterval(() => {
-      msgIdx = (msgIdx + 1) % AI_LOADING_MSGS.length;
-      setAiLoadingMsg(AI_LOADING_MSGS[msgIdx]);
-    }, 1600);
+    const turnIndex = conversationTurns.length; // 0, 1, or 2
+    const isFinal   = turnIndex >= 2;
+
+    setConversationState(isFinal ? 'loading_result' : `loading_q${turnIndex + 2}`);
+    setAiError('');
+
+    const thisConversation = [
+      ...conversationTurns,
+      { question: currentQuestion, answer: currentAnswer.trim() },
+    ];
 
     try {
-      const response = await fetch('/.netlify/functions/analyse-project', {
+      const res = await fetch('/.netlify/functions/analyse-project', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userDescription: notes,
+          turn: isFinal ? 'final' : `q${turnIndex + 2}`,
+          conversation: thisConversation,
           allTypes: PROJECT_TYPES,
           allFeatures: FEATURES_BY_TYPE,
           allAddons: ADDONS,
         }),
       });
 
-      clearInterval(msgTimer);
-
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Analysis failed');
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Request failed');
       }
 
-      const data = await response.json();
+      const data = await res.json();
 
-      // Resolve project type
-      const type = PROJECT_TYPES.find(t => t.id === data.suggestedTypeId) || PROJECT_TYPES[0];
-      setProjectType(type);
-      if (type.timelineOptions?.[0]) setTimeline(type.timelineOptions[0].value);
+      // Save this turn now that the API call succeeded
+      setConversationTurns(thisConversation);
+      setCurrentAnswer('');
 
-      // Resolve features
-      const typeFeatures = FEATURES_BY_TYPE[type.id] || [];
-      const features = (data.suggestedFeatureIds || [])
-        .map(id => typeFeatures.find(f => f.id === id))
-        .filter(Boolean);
-      setSelectedFeatures(features);
+      if (isFinal) {
+        const type = PROJECT_TYPES.find(t => t.id === data.suggestedTypeId) || PROJECT_TYPES[0];
+        setProjectType(type);
+        if (type.timelineOptions?.[0]) setTimeline(type.timelineOptions[0].value);
 
-      // Resolve add-ons
-      const addons = (data.suggestedAddonIds || [])
-        .map(id => ADDONS.find(a => a.id === id))
-        .filter(Boolean);
-      setSelectedAddons(addons);
+        const typeFeatures = FEATURES_BY_TYPE[type.id] || [];
+        const features = (data.suggestedFeatureIds || [])
+          .map(id => typeFeatures.find(f => f.id === id))
+          .filter(Boolean);
+        setSelectedFeatures(features);
 
-      // Track which IDs were AI-chosen for badge display
-      const aiIds = new Set([...features.map(f => f.id), ...addons.map(a => a.id)]);
-      setAiSelectedIds(aiIds);
+        const addons = (data.suggestedAddonIds || [])
+          .map(id => ADDONS.find(a => a.id === id))
+          .filter(Boolean);
+        setSelectedAddons(addons);
 
-      if (data.projectBrief) setProjectBrief(data.projectBrief);
+        const aiIds = new Set([...features.map(f => f.id), ...addons.map(a => a.id)]);
+        setAiSelectedIds(aiIds);
 
-      setAiResult({
-        reasoning: data.reasoning,
-        projectBrief: data.projectBrief,
-        preselectedType: type,
-        preselectedFeatureCount: features.length,
-        preselectedAddonCount: addons.length,
-      });
+        if (data.projectBrief) setProjectBrief(data.projectBrief);
+
+        setAiResult({
+          reasoning: data.reasoning,
+          projectBrief: data.projectBrief,
+          preselectedType: type,
+          preselectedFeatureCount: features.length,
+          preselectedAddonCount: addons.length,
+        });
+        setConversationState('result');
+      } else {
+        setCurrentQuestion(data.question);
+        setConversationState(`q${turnIndex + 2}`);
+      }
     } catch (err) {
-      clearInterval(msgTimer);
-      setAiError(err.message || 'Something went wrong. You can still choose manually.');
-    } finally {
-      setAiLoading(false);
-      setAiLoadingMsg(AI_LOADING_MSGS[0]);
+      setAiError(err.message || 'Something went wrong. Try again or choose manually.');
+      setConversationState(`q${turnIndex + 1}`);
     }
   };
 
-  const resetAI = () => {
+  const resetConversation = () => {
+    setConversationState('q1');
+    setConversationTurns([]);
+    setCurrentQuestion('');
+    setCurrentAnswer('');
     setAiResult(null);
     setAiError('');
     setProjectType(null);
@@ -727,23 +740,21 @@ const PricingPage = () => {
   const handleSendEmail = async () => {
     setEmailStatus('sending');
     try {
-      const subject = encodeURIComponent(`New Quote Request — ${clientDetails.name} — ${projectType?.name}`);
+      const subject = encodeURIComponent(`Website Plan Request — ${clientDetails.name} — ${projectType?.name}`);
       const body = encodeURIComponent(
-        `New quote request from EdohaDeveloped Quote Builder\n\n` +
-        `Client: ${clientDetails.name}\n` +
+        `New website plan request via EdohaDeveloped\n\n` +
+        `Name: ${clientDetails.name}\n` +
         `Email: ${clientDetails.email}\n` +
         `Company: ${clientDetails.company || 'N/A'}\n\n` +
-        `Project Type: ${projectType?.name}\n` +
-        `Features: ${selectedFeatures.map(f => f.name).join(', ')}\n` +
-        `Add-ons: ${selectedAddons.map(a => a.name).join(', ') || 'None'}\n` +
+        `Project: ${projectType?.name}\n` +
+        `Features: ${selectedFeatures.map(f => f.name).join(', ') || 'None selected'}\n` +
+        `Extras: ${selectedAddons.map(a => a.name).join(', ') || 'None'}\n` +
         `Timeline: ${projectType?.timelineOptions?.find(t => t.value === timeline)?.label || 'Not specified'}\n` +
         `Start Date: ${startDate || 'Not specified'}\n\n` +
-        `Project Notes:\n${notes}\n\n` +
-        `Project Brief (AI-generated):\n${projectBrief}\n\n` +
-        `Total Estimate: ${currency.symbol}${totals.total.toLocaleString()} ${currency.code}\n\n` +
-        `[PDF quote generated and available for download by client]`
+        `Project Brief:\n${projectBrief || 'Not generated'}\n\n` +
+        `Total Estimate: ${currency.symbol}${totals.total.toLocaleString()} ${currency.code}`
       );
-      window.location.href = `mailto:aee9552s@MissouriState.edu?subject=${subject}&body=${body}`;
+      window.location.href = `mailto:edohadevelops@gmail.com?subject=${subject}&body=${body}`;
       setTimeout(() => setEmailStatus('sent'), 800);
     } catch {
       setEmailStatus('idle');
@@ -759,9 +770,9 @@ const PricingPage = () => {
     <div className="pricing-page">
       <div className="pricing-header">
         <div className="pricing-header-inner">
-          <h1 className="pricing-page-title font-display">Get Your Project Quote</h1>
+          <h1 className="pricing-page-title font-display">Build Your Website</h1>
           <p className="pricing-page-sub">
-            Answer a few questions and get a detailed, personalised quote in minutes.
+            Answer a few questions and walk away with a clear, honest plan for your project — and a price you can actually work with.
           </p>
         </div>
       </div>
@@ -800,24 +811,24 @@ const PricingPage = () => {
                   />
                 )}
                 {step === 1 && (
-                  <StepAIInterview
-                    clientDetails={clientDetails}
-                    notes={notes}
-                    setNotes={setNotes}
-                    aiLoading={aiLoading}
-                    aiLoadingMsg={aiLoadingMsg}
+                  <StepAIConversation
+                    conversationState={conversationState}
+                    currentQuestion={currentQuestion}
+                    currentAnswer={currentAnswer}
+                    setCurrentAnswer={setCurrentAnswer}
                     aiError={aiError}
                     aiResult={aiResult}
-                    onAnalyse={handleAnalyse}
+                    onSubmitTurn={handleSubmitTurn}
                     onSkip={() => goToStep(2)}
                     onContinue={() => goToStep(2)}
-                    onRestart={resetAI}
+                    onRestart={resetConversation}
                     onBack={() => goToStep(0)}
                   />
                 )}
                 {step === 2 && (
                   <StepProjectType
                     selected={projectType}
+                    aiUsed={aiUsed}
                     onSelect={handleProjectTypeSelect}
                     onNext={() => goToStep(3)}
                     onBack={() => goToStep(1)}

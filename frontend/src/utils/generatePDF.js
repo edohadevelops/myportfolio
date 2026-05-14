@@ -1,26 +1,83 @@
 import jsPDF from 'jspdf';
 
-const DARK = [15, 15, 26];       // #0f0f1a
-const GOLD = [212, 175, 55];     // #D4AF37
-const WHITE = [255, 255, 255];
-const LIGHT_GRAY = [245, 244, 240];
-const MID_GRAY = [180, 175, 165];
+const DARK      = [15, 15, 26];
+const GOLD      = [212, 175, 55];
+const WHITE     = [255, 255, 255];
+const OFF_WHITE = [248, 247, 244];
+const LIGHT_BG  = [245, 244, 240];
+const BORDER    = [230, 225, 215];
 const TEXT_DARK = [30, 30, 50];
-const TEXT_MID = [100, 95, 110];
-const BORDER = [230, 225, 215];
+const TEXT_MID  = [100, 95, 110];
+const TEXT_LIGHT= [160, 155, 165];
+const GREEN     = [22, 163, 74];
 
-const fmt = (amount, currency) => {
-  if (currency.code === 'NGN') return `${currency.symbol}${amount.toLocaleString()}`;
-  return `${currency.symbol}${amount.toLocaleString()}`;
-};
+const W  = 210;
+const H  = 297;
+const ML = 18;
+const MR = 18;
+const CW = W - ML - MR;
+const HEADER_H   = 58;
+const CONTENT_TOP= HEADER_H + 10;
+const BOTTOM_SAFE= H - 22;
+const FOOTER_H   = 16;
+
+const fmt = (amount, currency) => `${currency.symbol}${amount.toLocaleString()}`;
 
 const generateQuoteRef = () => {
-  const date = new Date();
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
   const rand = Math.floor(Math.random() * 9000) + 1000;
-  return `EDH-${y}${m}${d}-${rand}`;
+  return `EDH-${y}${m}${day}-${rand}`;
+};
+
+const drawFooter = (doc, y) => {
+  doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
+  doc.rect(0, H - 3, W, 3, 'F');
+
+  doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
+  doc.setLineWidth(0.3);
+  doc.line(ML, H - FOOTER_H, W - MR, H - FOOTER_H);
+
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(TEXT_LIGHT[0], TEXT_LIGHT[1], TEXT_LIGHT[2]);
+  doc.text(
+    'EdohaDeveloped   edohadevelops@gmail.com',
+    W / 2, H - FOOTER_H + 5,
+    { align: 'center' }
+  );
+};
+
+const drawPageHeader = (doc) => {
+  doc.setFillColor(DARK[0], DARK[1], DARK[2]);
+  doc.rect(0, 0, W, HEADER_H, 'F');
+
+  doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
+  doc.rect(0, HEADER_H - 3, W, 3, 'F');
+
+  // A.E. logo circle
+  const logoR = 13;
+  const logoX = ML + logoR;
+  const logoY = HEADER_H / 2;
+  doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
+  doc.circle(logoX, logoY, logoR, 'F');
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(DARK[0], DARK[1], DARK[2]);
+  doc.text('A.E.', logoX, logoY + 3, { align: 'center' });
+
+  // Title
+  doc.setFontSize(22);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
+  doc.text('Website Plan', logoX + logoR + 10, logoY - 4);
+
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
+  doc.text('EdohaDeveloped', logoX + logoR + 10, logoY + 6);
 };
 
 export const generatePDF = ({
@@ -35,313 +92,243 @@ export const generatePDF = ({
   currency,
 }) => {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const W = 210;
-  const H = 297;
-  const pad = 20;
   const quoteRef = generateQuoteRef();
   const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
-  // ── BACKGROUND ──
-  doc.setFillColor(...DARK);
+  let page = 1;
+
+  const addPage = () => {
+    drawFooter(doc, 0);
+    doc.addPage();
+    page++;
+    doc.setFillColor(WHITE[0], WHITE[1], WHITE[2]);
+    doc.rect(0, 0, W, H, 'F');
+    return 14;
+  };
+
+  const checkBreak = (y, needed = 12) => {
+    if (y + needed > BOTTOM_SAFE - FOOTER_H) return addPage();
+    return y;
+  };
+
+  // ── PAGE 1 SETUP ──
+  doc.setFillColor(WHITE[0], WHITE[1], WHITE[2]);
   doc.rect(0, 0, W, H, 'F');
 
-  // ── TOP ACCENT BAR ──
-  doc.setFillColor(...GOLD);
-  doc.rect(0, 0, W, 3, 'F');
+  drawPageHeader(doc);
 
-  // ── WHITE CARD ──
-  const cardX = pad;
-  const cardY = 18;
-  const cardW = W - pad * 2;
+  let y = CONTENT_TOP;
 
-  // Card shadow effect (slightly offset dark rect)
-  doc.setFillColor(10, 10, 20);
-  doc.roundedRect(cardX + 2, cardY + 2, cardW, H - 36, 6, 6, 'F');
+  // ── QUOTE META ROW ──
+  doc.setFillColor(LIGHT_BG[0], LIGHT_BG[1], LIGHT_BG[2]);
+  doc.roundedRect(ML, y, CW, 20, 3, 3, 'F');
 
-  // Main white card
-  doc.setFillColor(...WHITE);
-  doc.roundedRect(cardX, cardY, cardW, H - 36, 6, 6, 'F');
-
-  let y = cardY + 14;
-
-  // ── HEADER ──
-  // "PROJECT QUOTE" large title
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(28);
-  doc.setTextColor(...DARK);
-  doc.text('PROJECT QUOTE', W / 2, y, { align: 'center' });
-  y += 8;
-
-  // Gold underline
-  doc.setDrawColor(...GOLD);
-  doc.setLineWidth(0.8);
-  doc.line(pad + 20, y, W - pad - 20, y);
-  y += 7;
-
-  // Pill subtitle — EdohaDeveloped
-  const pillW = 70;
-  const pillH = 8;
-  const pillX = W / 2 - pillW / 2;
-  doc.setDrawColor(...GOLD);
-  doc.setLineWidth(0.5);
-  doc.roundedRect(pillX, y, pillW, pillH, 4, 4, 'S');
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...TEXT_DARK);
-  doc.text('EdohaDeveloped — Web Development Services', W / 2, y + 5.5, { align: 'center' });
-  y += 16;
-
-  // ── META ROW (ref, date, client) ──
-  doc.setFillColor(...LIGHT_GRAY);
-  doc.roundedRect(cardX + 8, y, cardW - 16, 20, 3, 3, 'F');
-
-  const metaY = y + 7;
-  const col1 = cardX + 16;
+  const col1 = ML + 8;
   const col2 = W / 2 - 10;
-  const col3 = W / 2 + 25;
+  const col3 = col2 + 50;
+  const metaY = y + 7;
 
-  doc.setFontSize(7);
+  doc.setFontSize(6.5);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...MID_GRAY);
-  doc.text('QUOTE REFERENCE', col1, metaY - 2);
-  doc.text('DATE ISSUED', col2, metaY - 2);
-  doc.text('PREPARED FOR', col3, metaY - 2);
+  doc.setTextColor(TEXT_LIGHT[0], TEXT_LIGHT[1], TEXT_LIGHT[2]);
+  doc.text('QUOTE REF', col1, metaY);
+  doc.text('DATE', col2, metaY);
+  doc.text('PREPARED FOR', col3, metaY);
 
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...DARK);
-  doc.text(quoteRef, col1, metaY + 4);
-  doc.text(today, col2, metaY + 4);
-  doc.text(clientDetails.name, col3, metaY + 4);
+  doc.setTextColor(TEXT_DARK[0], TEXT_DARK[1], TEXT_DARK[2]);
+  doc.text(quoteRef, col1, metaY + 5);
+  doc.text(today, col2, metaY + 5);
+  doc.text(clientDetails.name, col3, metaY + 5);
 
   if (clientDetails.company) {
-    doc.setFontSize(8);
+    doc.setFontSize(7.5);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...TEXT_MID);
-    doc.text(clientDetails.company, col3, metaY + 9);
+    doc.setTextColor(TEXT_MID[0], TEXT_MID[1], TEXT_MID[2]);
+    doc.text(clientDetails.company, col3, metaY + 10);
   }
 
-  y += 28;
+  y += 27;
 
-  // ── SECTION: PROJECT BRIEF ──
-  if (projectBrief) {
-    doc.setFontSize(8);
+  // Helper: draw a section heading
+  const sectionHeading = (label) => {
+    y = checkBreak(y, 14);
+    doc.setFontSize(7.5);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-    doc.text('PROJECT BRIEF', cardX + 8, y);
-
-    // Dashed line
-    y += 3;
-    doc.setDrawColor(...BORDER);
-    doc.setLineDashPattern([2, 2], 0);
-    doc.setLineWidth(0.4);
-    doc.line(cardX + 8, y, cardX + cardW - 8, y);
-    doc.setLineDashPattern([], 0);
+    doc.text(label.toUpperCase(), ML, y);
+    y += 4;
+    doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
+    doc.setLineWidth(0.3);
+    doc.line(ML, y, W - MR, y);
     y += 5;
+  };
 
+  // Helper: wrapped text block
+  const wrappedText = (text, x, maxW, size = 9, color = TEXT_DARK, style = 'normal') => {
+    doc.setFontSize(size);
+    doc.setFont('helvetica', style);
+    doc.setTextColor(color[0], color[1], color[2]);
+    const lines = doc.splitTextToSize(text, maxW);
+    lines.forEach(line => {
+      y = checkBreak(y, size * 0.4);
+      doc.text(line, x, y);
+      y += size * 0.45;
+    });
+  };
+
+  // Helper: line item row
+  const lineItem = (label, price, highlight = false) => {
+    y = checkBreak(y, 9);
+    if (highlight) {
+      doc.setFillColor(OFF_WHITE[0], OFF_WHITE[1], OFF_WHITE[2]);
+      doc.rect(ML, y - 3.5, CW, 8, 'F');
+    }
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(TEXT_DARK[0], TEXT_DARK[1], TEXT_DARK[2]);
+    const labelLines = doc.splitTextToSize(`  ${label}`, CW - 30);
+    doc.text(labelLines[0], ML, y + 1);
+    doc.setFont('helvetica', 'bold');
+    doc.text(price, W - MR, y + 1, { align: 'right' });
+    y += 8;
+  };
+
+  // ── PROJECT BRIEF ──
+  if (projectBrief) {
+    sectionHeading('Project Brief');
     doc.setFontSize(9);
     doc.setFont('helvetica', 'italic');
-    doc.setTextColor(...TEXT_MID);
-    const briefLines = doc.splitTextToSize(projectBrief, cardW - 20);
-    doc.text(briefLines, cardX + 8, y);
-    y += briefLines.length * 5 + 6;
+    doc.setTextColor(TEXT_MID[0], TEXT_MID[1], TEXT_MID[2]);
+    const briefLines = doc.splitTextToSize(projectBrief, CW);
+    briefLines.forEach(line => {
+      y = checkBreak(y, 6);
+      doc.text(line, ML, y);
+      y += 5;
+    });
+    y += 4;
   }
 
-  // ── SECTION: PROJECT TYPE ──
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-  doc.text('PROJECT TYPE', cardX + 8, y);
-
-  y += 3;
-  doc.setDrawColor(...BORDER);
-  doc.setLineDashPattern([2, 2], 0);
-  doc.setLineWidth(0.4);
-  doc.line(cardX + 8, y, cardX + cardW - 8, y);
-  doc.setLineDashPattern([], 0);
-  y += 5;
-
+  // ── PROJECT TYPE ──
+  sectionHeading('Project Type');
   doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...TEXT_DARK);
-  doc.text(projectType.name, cardX + 8, y);
+  doc.setTextColor(TEXT_DARK[0], TEXT_DARK[1], TEXT_DARK[2]);
+  doc.text(projectType.name, ML, y);
   doc.setFont('helvetica', 'bold');
-  doc.text(fmt(totals.base, currency), cardX + cardW - 8, y, { align: 'right' });
+  doc.text(fmt(totals.base, currency), W - MR, y, { align: 'right' });
+  y += 5;
 
-  y += 4;
+  const baseDesc = `Base package includes: ${projectType.includes.join(', ')}.`;
+  const baseLines = doc.splitTextToSize(baseDesc, CW);
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...TEXT_MID);
-  doc.text('Base price — includes: ' + projectType.includes.join(', '), cardX + 8, y);
-  y += 10;
+  doc.setTextColor(TEXT_MID[0], TEXT_MID[1], TEXT_MID[2]);
+  baseLines.forEach(line => {
+    y = checkBreak(y, 5);
+    doc.text(line, ML, y);
+    y += 4.5;
+  });
+  y += 6;
 
-  // ── SECTION: FEATURES ──
+  // ── FEATURES ──
   if (selectedFeatures.length > 0) {
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-    doc.text('SELECTED FEATURES', cardX + 8, y);
-
-    y += 3;
-    doc.setDrawColor(...BORDER);
-    doc.setLineDashPattern([2, 2], 0);
-    doc.setLineWidth(0.4);
-    doc.line(cardX + 8, y, cardX + cardW - 8, y);
-    doc.setLineDashPattern([], 0);
-    y += 5;
-
+    sectionHeading('Selected Features');
     selectedFeatures.forEach((f, i) => {
-      if (i % 2 === 0) {
-        doc.setFillColor(250, 249, 246);
-        doc.rect(cardX + 6, y - 3, cardW - 12, 8, 'F');
-      }
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...TEXT_DARK);
-      doc.text(`• ${f.name}`, cardX + 10, y + 2);
-      doc.setFont('helvetica', 'bold');
-      doc.text(fmt(Math.round(f.price * currency.rate), currency), cardX + cardW - 8, y + 2, { align: 'right' });
-      y += 8;
+      lineItem(f.name, fmt(Math.round(f.price * currency.rate), currency), i % 2 === 0);
     });
 
-    // Discount line
     if (totals.discount > 0) {
+      y = checkBreak(y, 9);
       doc.setFontSize(8.5);
       doc.setFont('helvetica', 'italic');
-      doc.setTextColor(22, 163, 74); // green
-      doc.text(`✓ 10% loyalty discount (5+ features selected)`, cardX + 10, y + 2);
+      doc.setTextColor(GREEN[0], GREEN[1], GREEN[2]);
+      doc.text('  10% loyalty discount (5 or more features selected)', ML, y + 1);
       doc.setFont('helvetica', 'bold');
-      doc.text(`-${fmt(totals.discount, currency)}`, cardX + cardW - 8, y + 2, { align: 'right' });
+      doc.text(`-${fmt(totals.discount, currency)}`, W - MR, y + 1, { align: 'right' });
       y += 8;
     }
-    y += 3;
+    y += 4;
   }
 
-  // ── SECTION: ADD-ONS ──
+  // ── EXTRAS ──
   if (selectedAddons.length > 0) {
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-    doc.text('ADD-ONS', cardX + 8, y);
-
-    y += 3;
-    doc.setDrawColor(...BORDER);
-    doc.setLineDashPattern([2, 2], 0);
-    doc.setLineWidth(0.4);
-    doc.line(cardX + 8, y, cardX + cardW - 8, y);
-    doc.setLineDashPattern([], 0);
-    y += 5;
-
+    sectionHeading('Extras');
     selectedAddons.forEach((a, i) => {
-      if (i % 2 === 0) {
-        doc.setFillColor(250, 249, 246);
-        doc.rect(cardX + 6, y - 3, cardW - 12, 8, 'F');
-      }
-      const label = a.isPercentage ? `${a.name} (+${a.percentage}%)` : a.name;
-      const price = a.isPercentage ? fmt(totals.rushAmount, currency) : fmt(Math.round(a.price * currency.rate), currency);
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...TEXT_DARK);
-      doc.text(`• ${label}`, cardX + 10, y + 2);
-      doc.setFont('helvetica', 'bold');
-      doc.text(price, cardX + cardW - 8, y + 2, { align: 'right' });
-      y += 8;
+      const price = a.isPercentage
+        ? fmt(totals.rushAmount, currency)
+        : fmt(Math.round(a.price * currency.rate), currency);
+      lineItem(a.name, price, i % 2 === 0);
     });
-    y += 3;
+    y += 4;
   }
 
-  // ── SECTION: TIMELINE ──
+  // ── TIMELINE ──
   if (timeline || startDate) {
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-    doc.text('TIMELINE', cardX + 8, y);
-
-    y += 3;
-    doc.setDrawColor(...BORDER);
-    doc.setLineDashPattern([2, 2], 0);
-    doc.setLineWidth(0.4);
-    doc.line(cardX + 8, y, cardX + cardW - 8, y);
-    doc.setLineDashPattern([], 0);
-    y += 5;
-
+    sectionHeading('Timeline');
     if (startDate) {
+      y = checkBreak(y, 7);
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...TEXT_DARK);
-      doc.text(`Preferred Start Date:  ${startDate}`, cardX + 10, y + 2);
-      y += 7;
+      doc.setTextColor(TEXT_DARK[0], TEXT_DARK[1], TEXT_DARK[2]);
+      doc.text(`Preferred start date:  ${startDate}`, ML, y);
+      y += 6;
     }
     if (timeline && timeline !== 'none') {
+      y = checkBreak(y, 7);
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...TEXT_DARK);
-      doc.text(`Estimated Duration:  ${timeline}`, cardX + 10, y + 2);
-      y += 7;
+      doc.setTextColor(TEXT_DARK[0], TEXT_DARK[1], TEXT_DARK[2]);
+      doc.text(`Estimated duration:  ${timeline}`, ML, y);
+      y += 6;
     }
-    y += 3;
+    y += 4;
   }
 
   // ── TOTAL BOX ──
+  y = checkBreak(y, 22);
   doc.setFillColor(DARK[0], DARK[1], DARK[2]);
-  doc.roundedRect(cardX + 8, y, cardW - 16, 18, 4, 4, 'F');
+  doc.roundedRect(ML, y, CW, 18, 4, 4, 'F');
   doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...GOLD);
-  doc.text('TOTAL ESTIMATE', cardX + 16, y + 7);
+  doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
+  doc.text('Total Estimate', ML + 8, y + 7);
   doc.setFontSize(16);
-  doc.text(fmt(totals.total, currency), cardX + cardW - 16, y + 11, { align: 'right' });
+  doc.text(fmt(totals.total, currency), W - MR - 8, y + 11, { align: 'right' });
   if (currency.code === 'NGN') {
-    doc.setFontSize(8);
-    doc.setTextColor(200, 200, 200);
-    doc.text(`(approx. $${Math.round(totals.total / currency.rate).toLocaleString()} USD)`, cardX + cardW - 16, y + 16, { align: 'right' });
+    doc.setFontSize(7.5);
+    doc.setTextColor(180, 180, 195);
+    doc.text(`approx. $${Math.round(totals.total / currency.rate).toLocaleString()} USD`, W - MR - 8, y + 16, { align: 'right' });
   }
-  y += 25;
+  y += 26;
 
   // ── TERMS ──
-  doc.setFontSize(7.5);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-  doc.text('TERMS & CONDITIONS', cardX + 8, y);
-  y += 4;
+  y = checkBreak(y, 14);
+  sectionHeading('Terms');
 
   const terms = [
-    '• A 50% deposit is required before work begins. The remaining 50% is due upon project completion.',
-    '• This quote includes 2 rounds of revisions. Additional revisions are available at $20 per round.',
-    '• Final pricing may vary slightly based on project complexity discussed during onboarding.',
-    '• This quote is valid for 30 days from the date of issue.',
+    'A 50% deposit is required before work begins. The remaining balance is due on completion.',
+    'This quote includes 2 rounds of revisions. Additional rounds are available at $20 each.',
+    'Final pricing may vary slightly based on details discussed during onboarding.',
+    'This quote is valid for 30 days from the date above.',
   ];
 
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...TEXT_MID);
+  doc.setTextColor(TEXT_MID[0], TEXT_MID[1], TEXT_MID[2]);
   terms.forEach(t => {
-    doc.text(t, cardX + 8, y);
-    y += 4.5;
+    y = checkBreak(y, 6);
+    doc.setFontSize(8);
+    const tLines = doc.splitTextToSize(`  ${t}`, CW);
+    tLines.forEach(line => {
+      y = checkBreak(y, 5);
+      doc.text(line, ML, y);
+      y += 4.5;
+    });
   });
-  y += 4;
 
-  // ── FOOTER ──
-  doc.setDrawColor(...BORDER);
-  doc.setLineWidth(0.3);
-  doc.line(cardX + 8, y, cardX + cardW - 8, y);
-  y += 5;
+  drawFooter(doc, y);
 
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...DARK);
-  doc.text('EdohaDeveloped', W / 2, y, { align: 'center' });
-  y += 4;
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...TEXT_MID);
-  doc.setFontSize(7.5);
-  doc.text('aee9552s@MissouriState.edu  •  +1 (417) 227-8921  •  edohathedev.netlify.app', W / 2, y, { align: 'center' });
-  y += 4;
-  doc.text('Questions? Reply to this quote or book a call — details above.', W / 2, y, { align: 'center' });
-
-  // ── BOTTOM GOLD BAR ──
-  doc.setFillColor(...GOLD);
-  doc.rect(0, H - 3, W, 3, 'F');
-
-  doc.save(`EdohaDeveloped_Quote_${quoteRef}.pdf`);
+  doc.save(`EdohaDeveloped_Plan_${quoteRef}.pdf`);
   return quoteRef;
 };

@@ -1,8 +1,7 @@
 const Anthropic = require('@anthropic-ai/sdk');
 
-// Simple in-memory rate limiter (resets on function cold start)
 const requestLog = {};
-const RATE_LIMIT = 20;
+const RATE_LIMIT = 30;
 const WINDOW_MS = 24 * 60 * 60 * 1000;
 
 function isRateLimited(ip) {
@@ -27,109 +26,153 @@ exports.handler = async (event) => {
     };
   }
 
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'ANTHROPIC_API_KEY is not configured.' }),
+    };
+  }
+
   let body;
   try {
     body = JSON.parse(event.body);
   } catch {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
+    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body.' }) };
   }
 
-  const { userDescription, allTypes, allFeatures, allAddons } = body;
+  const { turn, conversation, allTypes, allFeatures, allAddons } = body;
 
-  if (!userDescription || userDescription.trim().length < 10) {
+  if (!turn || !conversation || !Array.isArray(conversation)) {
     return {
       statusCode: 400,
-      body: JSON.stringify({ error: 'Please provide a more detailed project description.' }),
+      body: JSON.stringify({ error: 'Missing required fields: turn and conversation.' }),
     };
   }
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-  const typesContext = (allTypes || []).map(t =>
-    `- ${t.name} (id: "${t.id}", Base: $${t.basePrice}): ${t.description}`
-  ).join('\n');
+  // Format conversation history for the prompt
+  const convHistory = conversation
+    .map((t) => `You asked: "${t.question}"\nThey said: "${t.answer}"`)
+    .join('\n\n');
 
-  const featuresContext = Object.entries(allFeatures || {}).map(([typeId, features]) => {
-    const typeName = (allTypes || []).find(t => t.id === typeId)?.name || typeId;
-    const list = features.map(f => `  • id:"${f.id}" — ${f.name} ($${f.price}): ${f.description}`).join('\n');
-    return `${typeName}:\n${list}`;
-  }).join('\n\n');
+  // ── FOLLOW-UP QUESTIONS (turns q2 and q3) ──
+  if (turn === 'q2' || turn === 'q3') {
+    const isSecond = turn === 'q2';
 
-  const addonsContext = (allAddons || []).map(a => {
-    const price = a.isPercentage ? `+${a.percentage}%` : `$${a.price}`;
-    return `  • id:"${a.id}" — ${a.name} (${price}): ${a.description}`;
-  }).join('\n');
+    const focus = isSecond
+      ? 'Ask one warm, specific follow-up question. Focus on whether they need customers to do anything online — like book, pay, sign up, or create an account. Or dig into a key feature they mentioned. Keep it under 45 words.'
+      : 'Ask one final question. Focus on their timeline or any specific tools or integrations they might need — like maps, social media feeds, payment options, or anything else. Keep it under 45 words.';
 
-  const prompt = `You are a helpful assistant for EdohaDeveloped, a professional web development service run by Amen Edoha Engworo. A potential client has described their project in plain English. Your job is to understand what they need and select the right project type, features, and add-ons for them.
+    const prompt = `You are having a friendly conversation with a potential client to help them figure out what kind of website they need. You work for EdohaDeveloped.
+
+Here is the conversation so far:
+
+${convHistory}
+
+${focus}
+
+Write ONLY the question. No intro, no label, just the question itself. Conversational and friendly tone.`;
+
+    try {
+      const msg = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 100,
+        messages: [{ role: 'user', content: prompt }],
+      });
+
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: msg.content[0].text.trim() }),
+      };
+    } catch (err) {
+      console.error('Follow-up error:', err?.message);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: `Follow-up question failed: ${err?.message}` }),
+      };
+    }
+  }
+
+  // ── FINAL ANALYSIS (turn = 'final') ──
+  if (turn === 'final') {
+    const typesContext = (allTypes || [])
+      .map(t => `  id:"${t.id}" — ${t.name} ($${t.basePrice}): ${t.description}`)
+      .join('\n');
+
+    const featuresContext = Object.entries(allFeatures || {}).map(([typeId, features]) => {
+      const typeName = (allTypes || []).find(t => t.id === typeId)?.name || typeId;
+      const list = features.map(f => `    id:"${f.id}" — ${f.name} ($${f.price})`).join('\n');
+      return `  ${typeName}:\n${list}`;
+    }).join('\n\n');
+
+    const addonsContext = (allAddons || [])
+      .map(a => `  id:"${a.id}" — ${a.name} (${a.isPercentage ? `+${a.percentage}%` : `$${a.price}`})`)
+      .join('\n');
+
+    const prompt = `You are helping a client figure out what kind of website they need for EdohaDeveloped. Based on everything they told you, select the right project type, features, and add-ons, then write a professional project brief.
+
+FULL CONVERSATION:
+${convHistory}
 
 AVAILABLE PROJECT TYPES:
 ${typesContext}
 
-AVAILABLE FEATURES BY PROJECT TYPE:
+AVAILABLE FEATURES (grouped by project type):
 ${featuresContext}
 
-AVAILABLE ADD-ONS (available for any project type):
+AVAILABLE ADD-ONS:
 ${addonsContext}
 
-CLIENT'S DESCRIPTION:
-"${userDescription}"
+Your job:
+1. Pick the single best project type based on what they described
+2. Select the most relevant feature IDs from that type (be thorough — select everything genuinely useful, skip anything irrelevant)
+3. Select any relevant add-on IDs (only suggest rush delivery if they mentioned urgency)
+4. Write one friendly sentence explaining why you chose this project type
+5. Write a clean 2 to 3 sentence project brief for their quote document
 
-Your task:
-1. Identify the single best project type for this client
-2. Select the most relevant feature IDs from that type's feature list (be generous — select everything genuinely useful for their use case, but don't pad with irrelevant items)
-3. Select any relevant add-on IDs that genuinely apply to their situation (e.g. hosting setup, support, rush delivery only if they mentioned urgency)
-4. Write a short friendly sentence explaining why you chose this project type
-5. Write a professional 2-3 sentence project brief suitable for a formal quote document
+Rules:
+  suggestedTypeId must be one of the available type IDs
+  suggestedFeatureIds must only use IDs from the chosen type's feature list
+  suggestedAddonIds must only use IDs from the add-ons list
+  The projectBrief should sound professional but readable
 
-RULES:
-- suggestedTypeId must be exactly one of the available type IDs
-- suggestedFeatureIds must only contain IDs from the feature list for the chosen type
-- suggestedAddonIds must only contain IDs from the add-ons list
-- Keep language simple and friendly — the client may not be technical
-- The projectBrief should sound professional, like something from a formal quote
-
-Respond ONLY with valid JSON in this exact format, no extra text, no markdown:
+Respond with ONLY valid JSON, no markdown, no extra text:
 {
-  "suggestedTypeId": "one of: portfolio | landing | website | webapp | ecommerce",
-  "reasoning": "A short friendly sentence explaining why this type fits",
-  "suggestedFeatureIds": ["array of feature ids from the chosen type only"],
-  "suggestedAddonIds": ["array of add-on ids, can be empty"],
-  "projectBrief": "A professional 2-3 sentence summary of the client's project for their quote document"
+  "suggestedTypeId": "portfolio | landing | website | webapp | ecommerce",
+  "reasoning": "One friendly sentence explaining why this type fits",
+  "suggestedFeatureIds": ["feature id", "..."],
+  "suggestedAddonIds": ["addon id or empty array"],
+  "projectBrief": "2 to 3 sentence professional summary of the client project"
 }`;
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'ANTHROPIC_API_KEY is not set in environment variables.' }),
-    };
+    try {
+      const msg = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: prompt }],
+      });
+
+      const raw = msg.content[0].text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+      const parsed = JSON.parse(raw);
+
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(parsed),
+      };
+    } catch (err) {
+      console.error('Final analysis error:', err?.message);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: `Analysis failed: ${err?.message}. You can still choose manually.` }),
+      };
+    }
   }
 
-  try {
-    const message = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
-      messages: [{ role: 'user', content: prompt }],
-    });
-
-    const raw = message.content[0].text.trim();
-
-    // Strip markdown code fences if the model wrapped the JSON
-    const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-    const parsed = JSON.parse(cleaned);
-
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(parsed),
-    };
-  } catch (err) {
-    const detail = err?.message || String(err);
-    console.error('AI error:', detail);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        error: `AI analysis failed: ${detail}. Please try again or choose manually.`,
-      }),
-    };
-  }
+  return {
+    statusCode: 400,
+    body: JSON.stringify({ error: `Unknown turn value: "${turn}". Expected q2, q3, or final.` }),
+  };
 };
