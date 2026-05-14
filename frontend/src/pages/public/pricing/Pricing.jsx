@@ -540,7 +540,7 @@ const StepTimeline = ({ projectType, timeline, setTimeline, startDate, setStartD
 const StepSummary = ({
   clientDetails, projectType, selectedFeatures, selectedAddons,
   timeline, startDate, totals, currency, projectBrief,
-  onBack, onDownloadPDF, onSendEmail, emailStatus,
+  onBack, onDownloadPDF, onSendEmail, onWhatsApp, emailStatus,
 }) => {
   const timelineLabel = projectType?.timelineOptions?.find(t => t.value === timeline)?.label;
   const items = [
@@ -633,10 +633,13 @@ const StepSummary = ({
           onClick={onSendEmail}
           disabled={emailStatus === 'sending' || emailStatus === 'sent'}
         >
-          {emailStatus === 'sent'    ? '✓ Sent to Amen!'
+          {emailStatus === 'sent'      ? '✓ Emailed!'
            : emailStatus === 'sending' ? 'Sending...'
            : emailStatus === 'error'   ? 'Try again'
-           : 'Send to Amen'}
+           : 'Email to Amen'}
+        </button>
+        <button className="btn-whatsapp" onClick={onWhatsApp}>
+          WhatsApp Amen
         </button>
         <button className="btn-ghost" onClick={onBack}>← Go back and adjust</button>
       </motion.div>
@@ -799,6 +802,29 @@ const PricingPage = () => {
     setSelectedAddons([]);
     setAiSelectedIds(new Set());
     setProjectBrief('');
+  };
+
+  const handleWhatsApp = () => {
+    const timelineLabel = projectType?.timelineOptions?.find(t => t.value === timeline)?.label;
+    const lines = [
+      `Hi Amen! I just submitted a quote request through your website builder.`,
+      ``,
+      `*Name:* ${clientDetails.name}`,
+      `*Email:* ${clientDetails.email}`,
+      clientDetails.phone   ? `*Phone:* ${clientDetails.phone}`       : null,
+      clientDetails.country ? `*Country:* ${clientDetails.country}`   : null,
+      clientDetails.company ? `*Company:* ${clientDetails.company}`   : null,
+      clientDetails.budget  ? `*Budget:* ${clientDetails.budget}`     : null,
+      ``,
+      `*Project:* ${projectType?.name}`,
+      selectedFeatures.length ? `*Features:* ${selectedFeatures.map(f => f.name).join(', ')}` : null,
+      timelineLabel           ? `*Timeline:* ${timelineLabel}`        : null,
+      `*Total Estimate:* ${currency.symbol}${totals.total.toLocaleString()} ${currency.code}`,
+      ``,
+      `The full PDF quote was also sent to your email. Looking forward to hearing from you!`,
+    ].filter(l => l !== null).join('\n');
+
+    window.open(`https://wa.me/14172278921?text=${encodeURIComponent(lines)}`, '_blank');
   };
 
   const handleDownloadPDF = () => {
@@ -987,6 +1013,7 @@ const PricingPage = () => {
                     onBack={() => goToStep(5)}
                     onDownloadPDF={handleDownloadPDF}
                     onSendEmail={handleSendEmail}
+                    onWhatsApp={handleWhatsApp}
                     emailStatus={emailStatus}
                   />
                 )}

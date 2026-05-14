@@ -458,6 +458,16 @@
 .btn-ai:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,58,237,0.35); }
 .btn-ai:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
+.btn-whatsapp {
+  @apply px-6 py-3 rounded-xl text-white text-[14px] font-bold transition-all duration-200;
+  background: #25D366;
+  font-family: 'DM Sans', sans-serif;
+  width: fit-content;
+  border: none;
+  cursor: pointer;
+}
+.btn-whatsapp:hover { opacity: 0.88; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(37,211,102,0.35); }
+
 .step-nav {
   @apply flex items-center gap-3 pt-2;
 }
