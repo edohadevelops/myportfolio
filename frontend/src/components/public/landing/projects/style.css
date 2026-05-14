@@ -1,0 +1,167 @@
+.projects-section {
+  @apply w-full py-20;
+}
+
+.projects-filters {
+  @apply flex items-center justify-between flex-wrap gap-4 mb-10;
+}
+
+.projects-categories {
+  @apply flex flex-wrap gap-2;
+}
+
+.projects-cat-btn {
+  @apply flex items-center gap-1.5 px-4 py-2 rounded-full border text-sm font-medium transition-all duration-200;
+  border-color: #E8E2D5;
+  color: #6B7280;
+  font-family: 'DM Sans', sans-serif;
+}
+.projects-cat-btn:hover {
+  border-color: #D1C9B8;
+  color: #374151;
+}
+.projects-cat-active {
+  font-weight: 600;
+}
+
+.projects-cat-count {
+  @apply text-[11px] bg-gray-100 rounded-full px-1.5 py-0.5;
+  color: #9CA3AF;
+}
+
+.projects-sort {
+  @apply px-4 py-2 rounded-xl border text-sm outline-none bg-white;
+  border-color: #E8E2D5;
+  color: #374151;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.projects-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+}
+
+.project-card {
+  @apply flex flex-col rounded-2xl border bg-white overflow-hidden cursor-pointer transition-all duration-300;
+  border-color: #F0EBE1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.project-card:hover {
+  box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+}
+
+.project-card-img {
+  @apply relative w-full overflow-hidden;
+  height: 220px;
+}
+.project-card-img img {
+  @apply w-full h-full object-cover object-top transition-transform duration-500;
+}
+.project-card:hover .project-card-img img {
+  transform: scale(1.04);
+}
+
+.project-card-img-overlay {
+  @apply absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300;
+  background: rgba(10,10,20,0.55);
+}
+.project-card:hover .project-card-img-overlay {
+  opacity: 1;
+}
+
+.project-card-view-btn {
+  @apply flex items-center gap-2 px-5 py-2.5 rounded-full text-white text-sm font-semibold;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.project-card-content {
+  @apply flex flex-col gap-3 p-5;
+}
+
+.project-card-header {
+  @apply flex items-start justify-between gap-2;
+}
+
+.project-card-title {
+  @apply text-[17px] font-bold leading-snug;
+  color: #111827;
+}
+
+.project-card-date {
+  @apply text-[12px] flex-shrink-0 mt-0.5;
+  color: #9CA3AF;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.project-card-desc {
+  @apply text-[13px] leading-relaxed;
+  color: #6B7280;
+  font-family: 'DM Sans', sans-serif;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.project-card-cats {
+  @apply flex flex-wrap gap-1.5;
+}
+
+.project-card-cat {
+  @apply px-2 py-0.5 rounded-md text-[11px] font-medium;
+  background: #F9F7F3;
+  color: #6B7280;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.project-card-stack {
+  @apply flex flex-wrap gap-1.5 pt-1 border-t;
+  border-color: #F3F0E8;
+}
+
+.project-card-stack-item {
+  @apply px-2 py-0.5 rounded text-[11px] font-medium;
+  background: #EFF6FF;
+  color: #3B82F6;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.project-card-stack-more {
+  @apply px-2 py-0.5 rounded text-[11px];
+  background: #F5F5F5;
+  color: #9CA3AF;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.projects-load-more {
+  @apply flex justify-center gap-3 mt-10;
+}
+
+.projects-load-btn {
+  @apply px-6 py-2.5 rounded-full text-white text-sm font-semibold transition-all duration-200;
+  font-family: 'DM Sans', sans-serif;
+}
+.projects-load-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+.projects-load-btn-outline {
+  @apply px-6 py-2.5 rounded-full border text-sm font-medium transition-all duration-200;
+  font-family: 'DM Sans', sans-serif;
+}
+.projects-load-btn-outline:hover { opacity: 0.8; }
+
+/* Coming soon */
+.projects-coming-soon {
+  @apply flex flex-col items-center text-center gap-5 py-20 px-6;
+}
+.projects-coming-icon {
+  @apply w-16 h-16 rounded-2xl flex items-center justify-center text-3xl;
+}
+.projects-coming-title {
+  @apply text-xl font-bold;
+  font-family: 'Syne', sans-serif;
+  color: var(--color-secondary);
+}
+.projects-coming-desc {
+  @apply text-[15px] max-w-[480px] leading-relaxed;
+  color: var(--color-subtext);
+  font-family: 'DM Sans', sans-serif;
+}

@@ -1,0 +1,119 @@
+.hero-section {
+  @apply w-full min-h-[100vh] relative flex flex-col items-center justify-center overflow-hidden;
+  background: #0a0a14;
+}
+
+.hero-bg-orbs {
+  @apply absolute inset-0 pointer-events-none;
+}
+
+.hero-orb {
+  @apply absolute rounded-full blur-[120px];
+}
+.hero-orb-1 {
+  width: 500px;
+  height: 500px;
+  top: -100px;
+  right: -100px;
+}
+.hero-orb-2 {
+  width: 400px;
+  height: 400px;
+  bottom: -80px;
+  left: -80px;
+}
+
+.hero-grid-overlay {
+  @apply absolute inset-0 opacity-[0.04];
+  background-image:
+    linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+.hero-content {
+  @apply relative z-10 flex flex-col items-center w-full max-w-[900px] px-6 text-center;
+}
+
+.hero-inner {
+  @apply flex flex-col items-center gap-4;
+}
+
+.hero-track-badge {
+  @apply inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium border mb-2;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.hero-greeting {
+  @apply text-base font-medium tracking-widest uppercase;
+  color: rgba(255,255,255,0.5);
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.2em;
+}
+
+.hero-name {
+  @apply text-[52px] md:text-[72px] lg:text-[88px] font-bold leading-none;
+  color: #fff;
+  letter-spacing: -2px;
+}
+
+.hero-typed-line {
+  @apply text-[20px] md:text-[26px] font-light;
+  color: rgba(255,255,255,0.7);
+  font-family: 'DM Sans', sans-serif;
+}
+
+.hero-typed-prefix {
+  color: rgba(255,255,255,0.5);
+}
+
+.typed-text {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.typed-cursor {
+  @apply inline-block ml-0.5 animate-pulse;
+  color: var(--color-primary);
+}
+
+.hero-subtitle {
+  @apply text-base max-w-[500px] leading-relaxed;
+  color: rgba(255,255,255,0.45);
+  font-family: 'DM Sans', sans-serif;
+}
+
+.hero-actions {
+  @apply flex gap-3 mt-2 flex-wrap justify-center;
+}
+
+.hero-cta-primary {
+  @apply px-7 py-3 rounded-full text-white text-[15px] font-semibold transition-all duration-300;
+  font-family: 'DM Sans', sans-serif;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+}
+.hero-cta-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+.hero-cta-secondary {
+  @apply px-7 py-3 rounded-full text-[15px] font-medium transition-all duration-300;
+  color: rgba(255,255,255,0.7);
+  border: 1px solid rgba(255,255,255,0.2);
+  font-family: 'DM Sans', sans-serif;
+}
+.hero-cta-secondary:hover {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.hero-scroll-indicator {
+  @apply absolute bottom-8 flex flex-col items-center gap-2;
+}
+.hero-scroll-dot {
+  @apply w-1 h-6 rounded-full;
+  background: rgba(255,255,255,0.2);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.1);
+}

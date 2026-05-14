@@ -1,0 +1,34 @@
+.admin-sidebar-component{
+    @apply w-full h-full overflow-y-auto px-2 lg:px-6 py-6 flex flex-col 
+}
+.admin-sidebar-component::-webkit-scrollbar{
+    @apply w-[2px] bg-[#fafafa]
+}
+.admin-sidebar-component::-webkit-scrollbar-thumb{
+    @apply bg-gray-300
+}
+.admin-sidebar-logo{
+    @apply w-[40px] lg:w-[140px] h-[30px] mb-12
+}
+.admin-sidebar-logo img{
+    @apply w-full h-full
+}
+.admin-sidebar-links-group{
+    @apply h-[calc(100%-78px)] flex flex-col justify-between gap-2
+}
+.admin-sidebar-page-links{
+    @apply flex flex-col gap-3 items-center
+}
+.admin-sidebar-link{
+    @apply flex justify-between p-2 items-center transition-all duration-300 ease-in gap-2 w-full
+}
+.admin-sidebar-link-details{
+    @apply flex gap-3 items-center transition-all duration-300 ease-in
+}
+.admin-sidebar-link-details span{
+    @apply text-[14px] transition-all duration-300 ease-in max-lg:hidden
+}
+.admin-sidebar-sublink-control{
+    @apply bg-gray-100 p-1 lg:p-2 rounded-full
+}
+

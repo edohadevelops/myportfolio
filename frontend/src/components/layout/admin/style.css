@@ -1,0 +1,12 @@
+.admin-layout{
+    @apply w-full h-[100vh] flex bg-[white]
+}
+.layout-sidebar{
+    @apply w-full max-w-[80px] lg:max-w-[200px] border-r
+}
+.layout-content{
+    @apply w-full max-w-[calc(100%-80)] lg:max-w-[calc(100%-200)] border-r
+}
+.layout-profile{
+    @apply w-full max-w-[300px] p-4 hidden lg:block
+}

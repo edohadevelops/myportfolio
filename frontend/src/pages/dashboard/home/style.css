@@ -1,0 +1,54 @@
+.dashboard-home-page{
+    @apply w-full h-full p-8;
+}
+.dashboard-greeting-card{
+    @apply w-full flex flex-col items-center justify-center mb-8;
+}
+.dashboard-greeting-date{
+    @apply text-[13px] text-gray-600 mb-6
+}
+.dashboard-greeting-img{
+    @apply w-[100px] h-[100px] rounded-full
+}
+.dashboard-greeting-img img{
+    @apply w-full h-full rounded-full object-cover object-top
+}
+.dashboard-greeting{
+    @apply font-semibold text-[35px] tracking-wide
+}
+.dashboard-greeting-description{
+    @apply text-sm text-gray-700
+}
+.dashboard-page-analytics{
+    @apply flex gap-3
+}
+.dashboard-analytic{
+    @apply flex-1 flex w-full flex-col items-center
+}
+.analytic-heading{
+    @apply flex justify-between gap-2 flex-wrap px-3 py-2 border w-full
+}
+.analytic-title{
+    @apply text-lg
+}
+.analytic-cta{
+    @apply p-2 rounded-full border text-gray-700
+}
+.analytic-display{
+    @apply rounded-full w-fit p-3 my-5 mb-6
+}
+.analytic-display div{
+    @apply rounded-full  w-fit p-3 
+}
+.analytic-details{
+    @apply flex flex-wrap gap-x-10 gap-y-1 justify-center 
+}
+.analytic-detail{
+    @apply flex gap-2 items-center
+}
+.analytic-detail-icon{
+    @apply w-[10px] h-[10px] rounded-full
+}
+.analytic-detail-text{
+    @apply text-[14px]
+}

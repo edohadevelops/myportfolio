@@ -1,0 +1,21 @@
+.navigation-component{
+    @apply w-full px-8 pt-8 bg-white pb-4 h-[115px]
+}
+.navigation-breadcrumbs{
+    @apply flex gap-1 mb-2
+}
+.navigation-breadcrumb{
+    @apply flex gap-1 items-center
+}
+.navigation-breadcrumb-label{
+    @apply text-[13px]
+}
+.navigation-content{
+    @apply flex justify-between items-center flex-wrap
+}
+.navigation-page-title{
+    @apply text-xl font-semibold text-gray-800
+}
+.navigation-page-action-new{
+    @apply bg-primary p-2 flex gap-1 rounded-md items-center text-white text-sm
+}

@@ -1,0 +1,28 @@
+.stack-section {
+  @apply w-full py-20;
+}
+
+.stack-grid {
+  @apply flex flex-wrap gap-3 justify-center;
+}
+
+.stack-chip {
+  @apply flex flex-col items-center gap-2 px-5 py-4 rounded-2xl border bg-white cursor-default transition-all duration-200;
+  border-color: #F0EBE1;
+  min-width: 90px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+.stack-chip:hover {
+  border-color: #E0D5C0;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+.stack-icon {
+  @apply flex items-center justify-center;
+}
+
+.stack-name {
+  @apply text-[12px] font-medium text-center whitespace-nowrap;
+  color: #4B5563;
+  font-family: 'DM Sans', sans-serif;
+}

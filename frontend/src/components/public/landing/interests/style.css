@@ -1,0 +1,31 @@
+.interests-section { @apply w-full py-20; }
+
+.interests-grid {
+  @apply grid grid-cols-2 md:grid-cols-3 gap-4;
+}
+
+.interest-card {
+  @apply flex flex-col gap-2 p-5 rounded-2xl border bg-white transition-all duration-300 cursor-default;
+  border-color: #F0EBE1;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+}
+.interest-card:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.07);
+  border-color: #E0D5C0;
+}
+
+.interest-icon-wrap {
+  @apply w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0;
+}
+
+.interest-label {
+  @apply text-[14px] font-bold;
+  font-family: 'Syne', sans-serif;
+  color: var(--color-secondary);
+}
+
+.interest-desc {
+  @apply text-[13px] leading-relaxed;
+  color: #6B7280;
+  font-family: 'DM Sans', sans-serif;
+}

@@ -1,0 +1,75 @@
+.cv-dropdown-wrapper {
+  @apply relative inline-flex;
+}
+
+.cv-dropdown-trigger {
+  @apply flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all duration-200;
+  font-family: 'DM Sans', sans-serif;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  white-space: nowrap;
+}
+.cv-dropdown-trigger:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.22);
+}
+
+.cv-chevron {
+  @apply flex items-center;
+  margin-left: 2px;
+}
+
+.cv-dropdown-menu {
+  @apply absolute top-full left-0 mt-2 py-2 rounded-2xl border z-50;
+  width: 260px;
+  background: var(--card-bg, white);
+  border-color: var(--color-border);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.13);
+}
+
+.cv-dropdown-heading {
+  @apply text-[10px] font-bold uppercase tracking-widest px-4 pb-1 pt-1;
+  color: #9CA3AF;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.12em;
+}
+
+.cv-dropdown-item {
+  @apply flex items-center justify-between px-4 py-3 transition-all duration-150 cursor-pointer;
+  color: var(--color-secondary);
+  font-family: 'DM Sans', sans-serif;
+  text-decoration: none;
+}
+.cv-dropdown-item:hover {
+  background: var(--color-surface);
+}
+
+.cv-item-left {
+  @apply flex items-center gap-3;
+}
+
+.cv-item-dot {
+  @apply w-2.5 h-2.5 rounded-full flex-shrink-0;
+}
+
+.cv-item-text {
+  @apply flex flex-col gap-0.5;
+}
+
+.cv-item-label {
+  @apply text-[13px] font-semibold;
+  color: var(--color-secondary);
+}
+
+.cv-item-sub {
+  @apply text-[11px];
+  color: #9CA3AF;
+}
+
+.cv-item-icon {
+  @apply flex-shrink-0;
+  color: #9CA3AF;
+  transition: color 0.15s;
+}
+.cv-dropdown-item:hover .cv-item-icon {
+  color: var(--color-secondary);
+}

@@ -1,0 +1,27 @@
+.footer-section {
+  @apply w-full py-10 mt-10 border-t;
+  border-color: #F0EBE1;
+  background: #FAFAF7;
+}
+
+.footer-inner {
+  @apply flex flex-col items-center gap-2 max-w-[1400px] mx-auto px-6;
+}
+
+.footer-logo {
+  @apply text-[28px] font-bold;
+  color: var(--color-secondary);
+  letter-spacing: -1px;
+}
+
+.footer-copy {
+  @apply text-[14px];
+  color: #6B7280;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.footer-sub {
+  @apply text-[12px];
+  color: #9CA3AF;
+  font-family: 'DM Sans', sans-serif;
+}

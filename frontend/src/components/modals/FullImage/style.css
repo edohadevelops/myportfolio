@@ -1,0 +1,12 @@
+.full-image-modal{
+    @apply w-screen h-screen bg-[#00000040] fixed top-0 left-0 backdrop-blur-sm 
+}
+.full-image{
+    @apply md:w-[700px] h-auto
+}
+.full-image img{
+    @apply w-full h-full
+}
+.full-image-modal-close-btn{
+    @apply p-2 md:p-4 rounded-full bg-white text-black text-lg right-4 md:right-10 top-6 lg:top-4 absolute hover:bg-gray-400 hover:text-white font-semibold
+}
