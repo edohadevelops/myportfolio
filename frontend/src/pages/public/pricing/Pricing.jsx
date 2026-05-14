@@ -23,7 +23,7 @@ const STEPS = [
 ];
 
 // ── SIDEBAR ──
-const Sidebar = ({ step, projectType, selectedFeatures, selectedAddons, currency, setCurrency, onRemoveFeature, onRemoveAddon, totals }) => (
+const Sidebar = ({ step, projectType, selectedFeatures, selectedAddons, timeline, currency, setCurrency, onRemoveFeature, onRemoveAddon, totals }) => (
   <aside className="pricing-sidebar">
     <div className="sidebar-header">
       <h3 className="sidebar-title">Your Plan</h3>
@@ -88,6 +88,18 @@ const Sidebar = ({ step, projectType, selectedFeatures, selectedAddons, currency
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {totals.timelineSurcharge > 0 && (
+          <div className="sidebar-section">
+            <p className="sidebar-section-label">Timeline</p>
+            <div className="sidebar-item">
+              <span className="sidebar-item-name">
+                {projectType?.timelineOptions?.find(t => t.value === timeline)?.label}
+              </span>
+              <span className="sidebar-price">+{currency.symbol}{totals.timelineSurcharge.toLocaleString()}</span>
+            </div>
           </div>
         )}
 
@@ -422,40 +434,54 @@ const StepAddons = ({ selected, aiSelectedIds, onToggle, onNext, onBack }) => (
 );
 
 // ── STEP 5: TIMELINE ──
-const StepTimeline = ({ projectType, timeline, setTimeline, startDate, setStartDate, onNext, onBack }) => {
+const StepTimeline = ({ projectType, timeline, setTimeline, startDate, setStartDate, totals, currency, onNext, onBack }) => {
   const timelineOptions = projectType?.timelineOptions || [];
   return (
     <div className="step-content">
       <div className="step-question">
-        <h2 className="step-title">When are you thinking of getting started?</h2>
+        <h2 className="step-title">How soon do you need this?</h2>
         <p className="step-sub">
-          No pressure if you don't have a specific date yet. This just helps us plan things out and give you a realistic sense of when it'll be ready.
+          Every project type has a standard delivery window that's built into the price. If you need it sooner, that's totally fine — it just means we prioritise your project and compress the timeline, which comes at an extra cost.
         </p>
       </div>
-      <div className="timeline-fields">
-        <div className="form-field">
-          <label className="form-label">Preferred Start Date</label>
-          <input
-            className="form-input"
-            type="date"
-            value={startDate}
-            onChange={e => setStartDate(e.target.value)}
-            min={new Date().toISOString().split('T')[0]}
-          />
-        </div>
-        <div className="form-field">
-          <label className="form-label">How long do you need it done in?</label>
-          <select
-            className="form-input form-select"
-            value={timeline}
-            onChange={e => setTimeline(e.target.value)}
-          >
-            {timelineOptions.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
+
+      <div className="timeline-options">
+        {timelineOptions.map(opt => {
+          const isSelected = timeline === opt.value;
+          const surchargeAmt = opt.surchargePercent > 0
+            ? Math.round((totals.base / currency.rate + totals.discountedFeatures / currency.rate) * opt.surchargePercent / 100)
+            : 0;
+          return (
+            <button
+              key={opt.value}
+              className={`timeline-card ${isSelected ? 'selected' : ''}`}
+              onClick={() => setTimeline(opt.value)}
+            >
+              <span className="timeline-card-label">{opt.label.split(' — ')[0]}</span>
+              <span className="timeline-card-duration">{opt.label.split(' — ')[1]}</span>
+              {opt.surchargePercent === 0 ? (
+                <span className="timeline-card-standard">Included in price</span>
+              ) : (
+                <span className="timeline-card-surcharge">
+                  +{opt.surchargePercent}% &nbsp; ({currency.symbol}{Math.round(surchargeAmt * currency.rate).toLocaleString()} extra)
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
+
+      <div className="form-field" style={{ maxWidth: 260 }}>
+        <label className="form-label">Preferred Start Date <span className="form-optional">(optional)</span></label>
+        <input
+          className="form-input"
+          type="date"
+          value={startDate}
+          onChange={e => setStartDate(e.target.value)}
+          min={new Date().toISOString().split('T')[0]}
+        />
+      </div>
+
       <div className="step-nav">
         <button className="btn-ghost" onClick={onBack}>← Back</button>
         <button className="btn-primary" onClick={onNext}>See my full plan →</button>
@@ -470,13 +496,14 @@ const StepSummary = ({
   timeline, startDate, totals, currency, projectBrief,
   onBack, onDownloadPDF, onSendEmail, emailStatus,
 }) => {
+  const timelineLabel = projectType?.timelineOptions?.find(t => t.value === timeline)?.label;
   const items = [
     { label: `${projectType?.icon} ${projectType?.name}`, price: totals.base },
     ...selectedFeatures.map(f => ({ label: f.name, price: Math.round(f.price * currency.rate) })),
-    ...selectedAddons.map(a => ({
-      label: a.name,
-      price: a.isPercentage ? totals.rushAmount : Math.round(a.price * currency.rate),
-    })),
+    ...(totals.timelineSurcharge > 0
+      ? [{ label: `Faster timeline — ${timelineLabel}`, price: totals.timelineSurcharge }]
+      : []),
+    ...selectedAddons.map(a => ({ label: a.name, price: Math.round(a.price * currency.rate) })),
   ];
 
   return (
@@ -586,7 +613,7 @@ const PricingPage = () => {
   const [selectedFeatures, setSelectedFeatures] = useState([]);
   const [selectedAddons, setSelectedAddons]     = useState([]);
   const [aiSelectedIds, setAiSelectedIds]       = useState(new Set());
-  const [timeline, setTimeline]                 = useState('none');
+  const [timeline, setTimeline]                 = useState('standard');
   const [startDate, setStartDate]               = useState('');
   const [projectBrief, setProjectBrief]         = useState('');
   const [emailStatus, setEmailStatus]           = useState('idle');
@@ -599,7 +626,7 @@ const PricingPage = () => {
   const [aiResult, setAiResult]                   = useState(null);
   const [aiError, setAiError]                     = useState('');
 
-  const totals = calculateTotal(projectType, selectedFeatures, selectedAddons, currency.code);
+  const totals = calculateTotal(projectType, selectedFeatures, selectedAddons, timeline, currency.code);
   const aiUsed = aiSelectedIds.size > 0;
 
   // Set opening question when client details are entered and we move to step 1
@@ -615,7 +642,7 @@ const PricingPage = () => {
   const handleProjectTypeSelect = (type) => {
     if (projectType?.id !== type.id) setSelectedFeatures([]);
     setProjectType(type);
-    if (type.timelineOptions?.[0]) setTimeline(type.timelineOptions[0].value);
+    setTimeline('standard');
   };
 
   const toggleFeature = (f) => {
@@ -671,7 +698,7 @@ const PricingPage = () => {
       if (isFinal) {
         const type = PROJECT_TYPES.find(t => t.id === data.suggestedTypeId) || PROJECT_TYPES[0];
         setProjectType(type);
-        if (type.timelineOptions?.[0]) setTimeline(type.timelineOptions[0].value);
+        setTimeline('standard');
 
         const typeFeatures = FEATURES_BY_TYPE[type.id] || [];
         const features = (data.suggestedFeatureIds || [])
@@ -860,6 +887,8 @@ const PricingPage = () => {
                     setTimeline={setTimeline}
                     startDate={startDate}
                     setStartDate={setStartDate}
+                    totals={totals}
+                    currency={currency}
                     onNext={() => goToStep(6)}
                     onBack={() => goToStep(4)}
                   />
@@ -891,6 +920,7 @@ const PricingPage = () => {
               projectType={projectType}
               selectedFeatures={selectedFeatures}
               selectedAddons={selectedAddons}
+              timeline={timeline}
               currency={currency}
               setCurrency={setCurrency}
               onRemoveFeature={id => setSelectedFeatures(prev => prev.filter(f => f.id !== id))}

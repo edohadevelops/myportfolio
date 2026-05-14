@@ -252,6 +252,13 @@ export const generatePDF = ({
     y += 4;
   }
 
+  // ── TIMELINE SURCHARGE ──
+  if (totals.timelineSurcharge > 0 && timeline) {
+    sectionHeading('Timeline');
+    lineItem(timeline, fmt(totals.timelineSurcharge, currency), false);
+    y += 4;
+  }
+
   // ── EXTRAS ──
   if (selectedAddons.length > 0) {
     sectionHeading('Extras');

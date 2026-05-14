@@ -363,7 +363,47 @@
   font-family: 'DM Sans', sans-serif;
 }
 
-/* ── TIMELINE ── */
+/* ── TIMELINE CARDS ── */
+.timeline-options {
+  @apply grid grid-cols-1 md:grid-cols-3 gap-3;
+}
+.timeline-card {
+  @apply flex flex-col gap-1.5 p-4 rounded-xl border bg-white text-left cursor-pointer transition-all duration-200;
+  border-color: var(--color-border);
+}
+.timeline-card:hover {
+  border-color: #D1C9B8;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.07);
+  transform: translateY(-1px);
+}
+.timeline-card.selected {
+  border-color: var(--color-primary);
+  background: #FFFDF5;
+  box-shadow: 0 0 0 2px rgba(212,175,55,0.2);
+}
+.timeline-card-label {
+  @apply text-[14px] font-bold;
+  font-family: 'Syne', sans-serif;
+  color: var(--color-secondary);
+}
+.timeline-card-duration {
+  @apply text-[13px];
+  color: #6B7280;
+  font-family: 'DM Sans', sans-serif;
+}
+.timeline-card-standard {
+  @apply text-[12px] font-semibold px-2 py-0.5 rounded-lg mt-1 w-fit;
+  color: #166534;
+  background: #DCFCE7;
+  font-family: 'DM Sans', sans-serif;
+}
+.timeline-card-surcharge {
+  @apply text-[12px] font-semibold px-2 py-0.5 rounded-lg mt-1 w-fit;
+  color: #92400E;
+  background: #FEF3C7;
+  font-family: 'DM Sans', sans-serif;
+}
+
 .timeline-fields {
   @apply grid grid-cols-1 md:grid-cols-2 gap-4;
 }
