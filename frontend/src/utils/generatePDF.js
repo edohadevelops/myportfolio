@@ -143,14 +143,34 @@ export const generatePDF = ({
   doc.text(today, col2, metaY + 5);
   doc.text(clientDetails.name, col3, metaY + 5);
 
-  if (clientDetails.company) {
+  if (clientDetails.company || clientDetails.country) {
     doc.setFontSize(7.5);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(TEXT_MID[0], TEXT_MID[1], TEXT_MID[2]);
-    doc.text(clientDetails.company, col3, metaY + 10);
+    const subLine = [clientDetails.company, clientDetails.country].filter(Boolean).join(', ');
+    doc.text(subLine, col3, metaY + 10);
   }
 
   y += 27;
+
+  // ── CLIENT CONTACT BLOCK ──
+  const contactLines = [
+    clientDetails.email && `Email: ${clientDetails.email}`,
+    clientDetails.phone && `Phone / WhatsApp: ${clientDetails.phone}`,
+    clientDetails.budget && `Budget range: ${clientDetails.budget}`,
+  ].filter(Boolean);
+
+  if (contactLines.length) {
+    doc.setFillColor(OFF_WHITE[0], OFF_WHITE[1], OFF_WHITE[2]);
+    doc.roundedRect(ML, y, CW, contactLines.length * 5 + 8, 2, 2, 'F');
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(TEXT_MID[0], TEXT_MID[1], TEXT_MID[2]);
+    contactLines.forEach((line, i) => {
+      doc.text(line, ML + 8, y + 6 + i * 5);
+    });
+    y += contactLines.length * 5 + 14;
+  }
 
   // Helper: draw a section heading
   const sectionHeading = (label) => {

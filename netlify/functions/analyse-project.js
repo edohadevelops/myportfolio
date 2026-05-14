@@ -40,7 +40,7 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body.' }) };
   }
 
-  const { turn, conversation, allTypes, allFeatures, allAddons } = body;
+  const { turn, conversation, clientBudget, allTypes, allFeatures, allAddons } = body;
 
   if (!turn || !conversation || !Array.isArray(conversation)) {
     return {
@@ -111,10 +111,16 @@ Write ONLY the question. No intro, no label, just the question itself. Conversat
       .map(a => `  id:"${a.id}" — ${a.name} (${a.isPercentage ? `+${a.percentage}%` : `$${a.price}`})`)
       .join('\n');
 
+    const budgetNote = clientBudget
+      ? `CLIENT BUDGET: The client indicated a budget of "${clientBudget}". Factor this in — avoid recommending features that would clearly push the total beyond their stated range, but do not sacrifice must-have functionality. If features are essential, include them and note the fit.`
+      : '';
+
     const prompt = `You are helping a client figure out what kind of website they need for EdohaDeveloped. Based on everything they told you, select the right project type, features, and add-ons, then write a professional project brief.
 
 FULL CONVERSATION:
 ${convHistory}
+
+${budgetNote}
 
 AVAILABLE PROJECT TYPES:
 ${typesContext}
@@ -127,8 +133,8 @@ ${addonsContext}
 
 Your job:
 1. Pick the single best project type based on what they described
-2. Select the most relevant feature IDs from that type (be thorough — select everything genuinely useful, skip anything irrelevant)
-3. Select any relevant add-on IDs (only suggest rush delivery if they mentioned urgency)
+2. Select the most relevant feature IDs from that type — be thorough but budget-conscious if a budget was provided
+3. Select any relevant add-on IDs (hosting, domain if mentioned; rush only if they indicated urgency)
 4. Write one friendly sentence explaining why you chose this project type
 5. Write a clean 2 to 3 sentence project brief for their quote document
 

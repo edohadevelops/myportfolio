@@ -123,43 +123,89 @@ const Sidebar = ({ step, projectType, selectedFeatures, selectedAddons, timeline
   </aside>
 );
 
+const BUDGET_OPTIONS = [
+  { value: '',           label: 'Not sure yet'        },
+  { value: 'Under $300', label: 'Under $300'           },
+  { value: '$300–$600',  label: '$300 to $600'         },
+  { value: '$600–$1k',   label: '$600 to $1,000'       },
+  { value: '$1k–$2k',    label: '$1,000 to $2,000'     },
+  { value: '$2k+',       label: '$2,000 and above'     },
+];
+
 // ── STEP 0: CLIENT DETAILS ──
 const StepClientDetails = ({ details, setDetails, onNext }) => {
-  const valid = details.name.trim() && details.email.trim();
+  const valid = details.name.trim() && details.email.trim() && details.phone.trim();
   return (
     <div className="step-content">
       <div className="step-question">
         <h2 className="step-title">First, let's get to know you a little.</h2>
-        <p className="step-sub">Just a couple of quick details so we can personalise your quote and follow up with you afterwards.</p>
+        <p className="step-sub">A few quick details so we can put together your quote and reach out to you directly when it's ready.</p>
       </div>
       <div className="form-fields">
-        <div className="form-field">
-          <label className="form-label">Your Full Name *</label>
-          <input
-            className="form-input"
-            placeholder="e.g. John Smith"
-            value={details.name}
-            onChange={e => setDetails(d => ({ ...d, name: e.target.value }))}
-          />
+        <div className="form-row">
+          <div className="form-field">
+            <label className="form-label">Your Full Name *</label>
+            <input
+              className="form-input"
+              placeholder="e.g. John Smith"
+              value={details.name}
+              onChange={e => setDetails(d => ({ ...d, name: e.target.value }))}
+            />
+          </div>
+          <div className="form-field">
+            <label className="form-label">Phone / WhatsApp *</label>
+            <input
+              className="form-input"
+              type="tel"
+              placeholder="e.g. +1 417 555 0123"
+              value={details.phone}
+              onChange={e => setDetails(d => ({ ...d, phone: e.target.value }))}
+            />
+          </div>
         </div>
-        <div className="form-field">
-          <label className="form-label">Email Address *</label>
-          <input
-            className="form-input"
-            type="email"
-            placeholder="your@email.com"
-            value={details.email}
-            onChange={e => setDetails(d => ({ ...d, email: e.target.value }))}
-          />
+        <div className="form-row">
+          <div className="form-field">
+            <label className="form-label">Email Address *</label>
+            <input
+              className="form-input"
+              type="email"
+              placeholder="your@email.com"
+              value={details.email}
+              onChange={e => setDetails(d => ({ ...d, email: e.target.value }))}
+            />
+          </div>
+          <div className="form-field">
+            <label className="form-label">Country <span className="form-optional">(optional)</span></label>
+            <input
+              className="form-input"
+              placeholder="e.g. Nigeria, USA"
+              value={details.country}
+              onChange={e => setDetails(d => ({ ...d, country: e.target.value }))}
+            />
+          </div>
         </div>
-        <div className="form-field">
-          <label className="form-label">Business or Company Name <span className="form-optional">(optional)</span></label>
-          <input
-            className="form-input"
-            placeholder="e.g. Acme Ltd or leave it blank"
-            value={details.company}
-            onChange={e => setDetails(d => ({ ...d, company: e.target.value }))}
-          />
+        <div className="form-row">
+          <div className="form-field">
+            <label className="form-label">Business or Company Name <span className="form-optional">(optional)</span></label>
+            <input
+              className="form-input"
+              placeholder="e.g. Acme Ltd or leave it blank"
+              value={details.company}
+              onChange={e => setDetails(d => ({ ...d, company: e.target.value }))}
+            />
+          </div>
+          <div className="form-field">
+            <label className="form-label">Approximate Budget</label>
+            <select
+              className="form-input form-select"
+              value={details.budget}
+              onChange={e => setDetails(d => ({ ...d, budget: e.target.value }))}
+            >
+              {BUDGET_OPTIONS.map(o => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
       <button className="btn-primary" disabled={!valid} onClick={onNext}>
@@ -611,7 +657,7 @@ const StepSummary = ({
 const PricingPage = () => {
   const [step, setStep]                         = useState(0);
   const [currency, setCurrency]                 = useState(CURRENCY.USD);
-  const [clientDetails, setClientDetails]       = useState({ name: '', email: '', company: '' });
+  const [clientDetails, setClientDetails]       = useState({ name: '', email: '', phone: '', country: '', company: '', budget: '' });
   const [projectType, setProjectType]           = useState(null);
   const [selectedFeatures, setSelectedFeatures] = useState([]);
   const [selectedAddons, setSelectedAddons]     = useState([]);
@@ -636,11 +682,14 @@ const PricingPage = () => {
   useEffect(() => {
     if (step === 1 && conversationTurns.length === 0 && !currentQuestion) {
       const firstName = clientDetails.name?.split(' ')[0] || 'there';
+      const budgetLine = clientDetails.budget
+        ? ` You've mentioned a budget of ${clientDetails.budget} — that's helpful context and I'll keep that in mind.`
+        : '';
       setCurrentQuestion(
-        `Hey ${firstName}! Let's figure out exactly what you need. Tell me about your business or idea, and what you're hoping a website will help you do. Just say it however comes naturally — no tech speak needed.`
+        `Hey ${firstName}! Let's figure out exactly what you need.${budgetLine} Tell me about your business or idea, and what you're hoping a website will help you do. Just say it however comes naturally — no tech speak needed.`
       );
     }
-  }, [step, clientDetails.name, conversationTurns.length, currentQuestion]);
+  }, [step, clientDetails.name, clientDetails.budget, conversationTurns.length, currentQuestion]);
 
   const handleProjectTypeSelect = (type) => {
     if (projectType?.id !== type.id) setSelectedFeatures([]);
@@ -681,6 +730,7 @@ const PricingPage = () => {
         body: JSON.stringify({
           turn: isFinal ? 'final' : `q${turnIndex + 2}`,
           conversation: thisConversation,
+          clientBudget: clientDetails.budget || null,
           allTypes: PROJECT_TYPES,
           allFeatures: FEATURES_BY_TYPE,
           allAddons: ADDONS,
@@ -792,7 +842,7 @@ const PricingPage = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          clientDetails,
+          clientDetails,   // includes phone, country, budget
           projectType,
           selectedFeatures,
           selectedAddons,

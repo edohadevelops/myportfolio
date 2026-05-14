@@ -74,12 +74,18 @@ exports.handler = async (event) => {
       <!-- Client -->
       <h2 style="margin:0 0 12px;font-size:14px;text-transform:uppercase;letter-spacing:0.06em;color:#9CA3AF">Client</h2>
       <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
-        <tr><td style="padding:5px 0;color:#6B7280;font-size:13px;width:100px">Name</td>
+        <tr><td style="padding:5px 0;color:#6B7280;font-size:13px;width:110px">Name</td>
             <td style="padding:5px 0;font-weight:600;font-size:13px">${clientDetails?.name}</td></tr>
         <tr><td style="padding:5px 0;color:#6B7280;font-size:13px">Email</td>
             <td style="padding:5px 0;font-size:13px"><a href="mailto:${clientDetails?.email}" style="color:#4F46E5">${clientDetails?.email}</a></td></tr>
+        ${clientDetails?.phone ? `<tr><td style="padding:5px 0;color:#6B7280;font-size:13px">Phone / WhatsApp</td>
+            <td style="padding:5px 0;font-size:13px"><a href="tel:${clientDetails.phone}" style="color:#4F46E5">${clientDetails.phone}</a></td></tr>` : ''}
+        ${clientDetails?.country ? `<tr><td style="padding:5px 0;color:#6B7280;font-size:13px">Country</td>
+            <td style="padding:5px 0;font-size:13px">${clientDetails.country}</td></tr>` : ''}
         ${clientDetails?.company ? `<tr><td style="padding:5px 0;color:#6B7280;font-size:13px">Company</td>
             <td style="padding:5px 0;font-size:13px">${clientDetails.company}</td></tr>` : ''}
+        ${clientDetails?.budget ? `<tr><td style="padding:5px 0;color:#6B7280;font-size:13px">Budget</td>
+            <td style="padding:5px 0;font-weight:600;font-size:13px;color:#D97706">${clientDetails.budget}</td></tr>` : ''}
       </table>
 
       <!-- Project breakdown -->
